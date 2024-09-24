@@ -1,0 +1,158 @@
+command /friendscore:
+    trigger:
+        delete {friendNum::1::*}
+        delete {friendNum::2::*}
+        delete {friendNum::3::*}
+        delete {friendNum::4::*}
+        delete {friendScore::*}
+        loop all offline players:
+            set {_puuid} to uuid of loop-offline player
+            loop all offline players:
+                set {_tuuid} to uuid of loop-offline player-2
+                if {friend::%{_puuid}%::%{_tuuid}%} >= 100:
+                    add 20 to {friendScore::%{_puuid}%}
+                if {friend::%{_puuid}%::%{_tuuid}%} >= 300:
+                    add 30 to {friendScore::%{_puuid}%}
+                if {friend::%{_puuid}%::%{_tuuid}%} >= 1000:
+                    add 10 to {friendScore::%{_puuid}%}
+                if {friend::%{_puuid}%::%{_tuuid}%} >= 3000:
+                    add 10 to {friendScore::%{_puuid}%}
+        loop all offline players:
+            set {_uuid} to uuid of loop-offline player
+            loop 7 times:
+                set {_num} to loop-value-2
+                if {friendprocess::%{_uuid}%::process::%{_num}%} is true:
+                    add 10 to {friendScore::%{_uuid}%}
+
+command /townhallquest:
+    trigger:
+        delete {townhallquest::*}
+        loop all offline players:
+            set {_uuid} to uuid of loop-offline player
+            loop 7 times:
+                set {_num} to loop-value-2
+                if {friendprocess::%{_uuid}%::process::%{_num}%} is true:
+                    add 1 to {townhallquest::%{_uuid}%}
+
+command /bestcouple:
+    trigger:
+        loop all offline players:
+            set {_puuid} to uuid of loop-offline player
+            set {friendMax::%{_puuid}%} to 0
+            loop all offline players:
+                set {_tuuid} to uuid of loop-offline player-2
+                if {friendMax::%{_puuid}%} < {friend::%{_puuid}%::%{_tuuid}%}:
+                    set {friendMax::%{_puuid}%} to {friend::%{_puuid}%::%{_tuuid}%}
+
+command /highlevel:
+    trigger:
+        delete {levelsum::*}
+        loop all offline players:
+            set {_uuid} to uuid of loop-offline player
+            set {_time} to 0
+            loop 4 times:
+                if loop-value-2 = 1:
+                    set {_x} to "farm"
+                else if loop-value-2 = 2:
+                    set {_x} to "mine"
+                else if loop-value-2 = 3:
+                    set {_x} to "adv"
+                else if loop-value-2 = 4:
+                    set {_x} to "fish"
+                
+                if {level::%{_x}%::%{_uuid}%} is set:
+                    send "%{level::%{_x}%::%{_uuid}%}%" to player
+                    add 1 to {_time}
+                    set {_leveladd::%{_uuid}%::%loop-value-2%} to {level::%{_x}%::%{_uuid}%}
+                    add {level::%{_x}%::%{_uuid}%} to {levelsum::%{_uuid}%}
+                if loop-value-2 = 4:
+                    if {_time} = 4:
+                        add max({_leveladd::%{_uuid}%::*}) * -1 to {levelsum::%{_uuid}%}
+                        add min({_leveladd::%{_uuid}%::*}) * -1 to {levelsum::%{_uuid}%}
+                    else if {_time} = 3:
+                        add max({_leveladd::%{_uuid}%::*}) * -1 to {levelsum::%{_uuid}%}
+                    else:
+                        set {levelsum::%{_uuid}%} to 0
+
+command /museumtotal:
+    trigger:
+        loop all offline players:
+            set {_uuid} to uuid of loop-offline player
+            loop {fossilmuseum::%{_uuid}%::*}:
+                if loop-value-2 is true:
+                    add 1 to {museumtotal::%{_uuid}%}
+            loop {fishmuseum::%{_uuid}%::*}:
+                if loop-value-2 is true:
+                    add 1 to {museumtotal::%{_uuid}%}
+
+command /endingloc:
+    trigger:
+        set {endingloc} to player's location
+        set x-coord of {endingloc} to (rounded x-coord of {endingloc}) - 0.5
+        set y-coord of {endingloc} to (rounded y-coord of {endingloc}) + 0.5
+        set z-coord of {endingloc} to (rounded z-coord of {endingloc}) - 0.5
+
+command /savesans [<text>]:
+    trigger:
+        set {wowsans} to "%arg 1%"
+
+command /ending [<text>]:
+    trigger:
+        if arg 1 != "remove":
+            set {_chatlength} to length of arg 1
+            play sound "block.amethyst_block.break" with volume 10.0 and pitch 1 at {endingloc}
+            
+            loop {_chatlength} times:
+                add 1 to {_num}
+                set {_msg} to first loop-value characters of arg 1
+
+                show 50 glow with offset of 3, 3, 3 and speed 10 at location of {endingloc}
+                play sound "custom.animal" with volume 10.0 and pitch a random number between 1.5 and 1.7 at {endingloc}
+                set {_text} to "%{wowsans}%%{_msg}%%{wowsans}%"
+                loop all text displays in radius 3 of {endingloc}:
+                    kill loop-entity
+
+                set {_n} to nbt compound from "{billboard:center,brightness:{sky:15,block:15},transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[5f,5f,5f]},text:'{text:%{_text}%,color:aqua}'}"
+                spawn text display at {endingloc} with nbt {_n}
+                wait 2 ticks
+
+command /particle [<integer>]:
+    trigger:
+        set {endingparticle} to arg 1
+
+function endingrank(t: text):
+    loop all offline players:
+        if name of loop-offline player is not "Hyunu_":
+            set {_ranklist::%uuid of loop-offline player%} to {%{_t}%::%uuid of loop-offline player%}
+
+    loop {_ranklist::*}:
+        add loop-value to {_value.%loop-value%::*}
+        add loop-index to {_name.%loop-value%::*}
+        set {_rank::%loop-value%} to loop-value
+    set {_low::*} to {_rank::*}
+    loop number of {_low::*} times:
+        set {_n} to number of {_low::*} - loop-number + 1
+        add {_low::%{_n}%} to {_high::*}
+
+    set {_n} to 0
+    loop {_high::*}:
+        add 1 to {_n}
+        loop number of {_name.%loop-value-1%::*} times:
+            set {_1} to {_name.%loop-value-1%::%loop-value-2%}
+            set {_1} to {_1} parsed as offline player
+            set {_name} to {name::%uuid of {_1}%}
+            if {_value.%loop-value-1%::%loop-number%} >= 1:
+                broadcast "&a%{_n}%등 %{_name}% &f| %{_value.%loop-value-1%::%loop-number%}%"
+                play sound "entity.experience_orb.pickup" with volume 10.0 and pitch 1.0 at {endingloc}
+                wait 10 ticks
+
+command /endingrank <text>:
+    trigger:
+        if player is op:
+            endingrank(arg 1)
+
+every 10 ticks:
+    if {endingparticle} = 1:
+        loop all players:
+            if name of loop-player = "Hyunu_":
+                show 10 flash with offset of 3, 3, 3 and speed 10 at location of loop-player

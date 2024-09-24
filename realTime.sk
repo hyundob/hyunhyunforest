@@ -1,0 +1,255 @@
+function taxSend(p: player):
+    loop all offline players:
+        if name of loop-offline player is not "Hyunu_":
+            add {serverRadishPrice} * {radish::%uuid of loop-offline player%::get} to {todaytotal::%uuid of loop-offline player%}
+            set {_ranklist::%uuid of loop-offline player%} to {todaytotal::%uuid of loop-offline player%}
+        delete {todaytotal::%uuid of loop-offline player%}
+
+    loop {_ranklist::*}:
+        add loop-value to {_value.%loop-value%::*}
+        add loop-index to {_name.%loop-value%::*}
+        set {_rank::%loop-value%} to loop-value
+    set {_low::*} to {_rank::*}
+    loop number of {_low::*} times:
+        set {_n} to number of {_low::*} - loop-number + 1
+        add {_low::%{_n}%} to {_high::*}
+
+    set {_n} to 0
+    loop {_high::*}:
+        add 1 to {_n}
+        loop number of {_name.%loop-value-1%::*} times:
+            set {_1} to {_name.%loop-value-1%::%loop-value-2%}
+            set {_1} to {_1} parsed as offline player
+            set {_name} to name of {_1}
+            if {_value.%loop-value-1%::%loop-number%} >= 1000000:
+                set {_TaxPer} to 0.15
+            if {_n} = 1:
+                set {_TaxPer} to 0.40
+            else if {_n} = 2:
+                set {_TaxPer} to 0.30
+            else if {_n} = 3:
+                set {_TaxPer} to 0.30
+            else if {_n} = 4:
+                set {_TaxPer} to 0.25
+            else if {_n} = 5:
+                set {_TaxPer} to 0.25
+            else:
+                set {_TaxPer} to 0.1
+            if {_value.%loop-value-1%::%loop-number%} >= 1:
+                send "%{_1}% %{_value.%loop-value-1%::%loop-number%}%" to {_p}
+                set {_Tax} to rounded ({_value.%loop-value-1%::%loop-number%} * {_TaxPer})
+                set {_TaxPer} to {_TaxPer} * 100
+                set {_uuid} to uuid of {_1}
+                if {notax::%{_uuid}%} >= 1:
+                    add 1 to {notax::%{_uuid}%}
+                add 1 to {notax::%{_uuid}%}
+                set {_item} to ghast tear with custom model data 16 named "&a세금 통지서" with lore "&9%{_name}%님" and "&7&o세금: %{_Tax}%"
+                sendMail({_1},{_item})
+
+function radishChange():
+    set {_random} to rounded (100 + 2900 * ((a random integer between 0 and 3000)/100)^2/900)
+    add 1 to {serverRadishTime}
+    loop all players:
+        if name of loop-player's inventory is "무 메뉴":
+            close loop-player's inventory
+    chance of 50%:
+        set {_random} to {_random} * -1
+    set {serverRadishPrice} to {serverRadishPrice} + {_random}
+    if {_random} >= 1:
+        broadcast "&a무 가격이 변동되었습니다. &c▲%{_random}% &7&o(%{serverRadishPrice}%)"
+    else:
+        broadcast "&a무 가격이 변동되었습니다. &9▼%{_random}% &7&o(%{serverRadishPrice}%)"
+    
+    if {serverRadishPrice} <= 0:
+        broadcast "&c모든 무가 썩었습니다."
+        set {serverRadishPrice} to 10000
+        loop all offline players:
+            set {_uuid} to uuid of loop-offline player
+            delete {radish::%{_uuid}%::get}
+            delete {radish::%{_uuid}%::time}
+    loop all offline players:
+        set {_uuid} to uuid of loop-offline player
+        set {_turn} to 24 - ({serverRadishTime} - {radish::%{_uuid}%::time})
+        if {_turn} = 0:
+            delete {radish::%{_uuid}%::get}
+            delete {radish::%{_uuid}%::time}
+            send "&c모든 무가 썩었습니다." to loop-offline player
+
+command /radish <text> [<integer>]:
+    trigger:
+        if player is op:
+            if arg 1 is "change":
+                radishChange()
+            else if arg 1 is "set":
+                set {serverRadishPrice} to arg 2
+                send "%{serverRadishPrice}%" to player
+
+on rightclick:
+    if player's tool is ghast tear:
+        if custom model data of player's tool is 16:
+            if name of player's tool is "&a세금 통지서":
+                set {_name} to uncolored line 1 of lore of player's tool
+                replace all "님" and " " with "" in {_name}
+                if "%player%" contains "%{_name}%":
+                    set {_tax} to uncolored line 2 of lore of player's tool
+                    replace all "세금:" and " " with "" in {_tax}
+                    set {_tax} to {_tax} parsed as integer
+                    if {money::%uuid of player%} >= {_tax}:
+                        set {_uuid} to uuid of player
+                        set {money::%uuid of player%} to {money::%uuid of player%} - {_tax}
+                        add {_tax} to {taxall::%uuid of player%}
+                        set {todaytotal::%uuid of player%} to {todaytotal::%uuid of player%} - {_tax}
+                        send "&a세금을 성공적으로 납부했습니다!" to player
+                        play sound "entity.experience_orb.pickup" with volume 0.5 for player
+                        set item amount of player's tool to item amount of player's tool - 1
+                        set {notax::%{_uuid}%} to {notax::%{_uuid}%} -1
+                    else:
+                        send "&c[ ! ] &f세금을 낼 돈이 없습니다!" to player
+                else:
+                    send "&c[ ! ] &f본인 세금만 낼 수 있습니다!" to player
+
+function dayReset():
+    loop all offline players:
+        set {_uuid} to uuid of loop-offline player
+        loop all offline players:
+            set {_uuid2} to uuid of loop-offline player-2
+            delete {present::%{_uuid}%::%{_uuid2}%}
+            delete {letter::%{_uuid}%::%{_uuid2}%}
+
+    loop all offline players:
+        set {_ranklist::%uuid of loop-offline player%} to {todaytotal::%uuid of loop-offline player%}
+
+    loop {_ranklist::*}:
+        add loop-value to {_value.%loop-value%::*}
+        add loop-index to {_name.%loop-value%::*}
+        set {_rank::%loop-value%} to loop-value-2
+    set {_low::*} to {_rank::*}
+    loop number of {_low::*} times:
+        set {_n} to number of {_low::*} - loop-number + 1
+        add {_low::%{_n}%} to {_high::*}
+
+    set {_n} to 0
+    loop {_high::*}:
+        add 1 to {_n}
+        loop number of {_name.%loop-value-1%::*} times:
+            set {_1} to {_name.%loop-value-1%::%loop-value-2%}
+            set {_1} to {_1} parsed as offline player
+            set {_1} to name of {_1}
+            broadcast "%{_n}%등 - %{_1}% : %{_value.%loop-value-1%::%loop-number%}%"
+    broadcast "&a하루가 초기화 되었습니다."
+
+command /resetday:
+    trigger:
+        dayReset()
+
+command /taxsend:
+    trigger:
+        if player is op:
+            taxSend(player)
+
+command /todaytotaladd [<offline player>] [<integer>]:
+    trigger:
+        if player is op:
+            set {_uuid} to uuid of arg 1
+            add arg 2 to {todaytotal::%{_uuid}%}
+
+command /letter [<player>]:
+    trigger:
+        if player is op:
+            set {_uuid} to uuid of arg 1
+            loop all offline players:
+                delete {letter::%{_uuid}%::%uuid of loop-offline player%}
+
+command /boxsend:
+    trigger:
+        if player is op:
+            loop all offline players:
+                set {_uuid} to uuid of loop-offline player
+                if {houseLevel::%{_uuid}%} = 1:
+                    set {_count} to 2
+                else if {houseLevel::%{_uuid}%} = 1:
+                    set {_count} to 4
+                if {houseLevel::%{_uuid}%} = 1:
+                    set {_count} to 6
+                else if {houseLevel::%{_uuid}%} = 1:
+                    set {_count} to 8
+                else if {houseLevel::%{_uuid}%} = 1:
+                    set {_count} to 10
+                set {_item} to {_count} of chest
+                sendMail(loop-offline player,{_item})
+
+command /taxhave:
+    trigger:
+        if player is op:
+            loop all offline players:
+                set {_uuid} to uuid of loop-offline player
+                loop {mailbox::%{_uuid}%::item::*}:
+                    if custom model data of loop-value-2 = 16:
+                        delete {mailbox::%{_uuid}%::item::%loop-index%}
+
+command /todaytotalget <player>:
+    trigger:
+        if player is op:
+            set {_uuid} to uuid of arg 1
+            send "&f%{todaytotal::%{_uuid}%}%" to player
+
+command /mailboxopen <offline player>:
+    trigger:
+        if player is op:
+            set {_uuid} to uuid of arg 1
+            set {_inv} to chest inventory with 6 row named "&fdummy.mailbox"
+            loop 45 times:
+                set {_num} to loop-value
+                set slot loop-value - 1 of {_inv} to {mailbox::%{_uuid}%::item::%{_num}%}
+            open {_inv} to player
+
+
+
+every 2 ticks:
+    set {_time} to now formatted human-readable
+    set {_hour1} to char at 11 in {_time}
+    set {_hour2} to char at 12 in {_time}
+    set {_minute1} to char at 14 in {_time}
+    set {_minute2} to char at 15 in {_time}
+    set {_second1} to char at 17 in {_time}
+    set {_second2} to char at 18 in {_time}
+
+    set {_hour1} to {_hour1} parsed as integer
+    set {_hour2} to {_hour2} parsed as integer
+    set {_minute1} to {_minute1} parsed as integer
+    set {_minute2} to {_minute2} parsed as integer
+    set {_second1} to {_second1} parsed as integer
+    set {_second2} to {_second2} parsed as integer
+    
+    set {_hour} to {_hour1} * 10 + {_hour2}
+    set {_minute} to rounded (({_minute1} * 10 + {_minute2} + (({_second1} * 10 + {_second2}) / 60 )) / 60 * 2000)
+    
+    if {_hour} >= 12:
+        set {_hour} to {_hour} - 12
+    else:
+        set {_hour} to {_hour}
+
+    set {_time} to {_hour} * 2000 + 6000 + {_minute}
+
+    if {_time} >= 24000:
+        set {_time} to {_time} - 24000
+
+    loop 24 times:
+        if {_time} = ((loop-value) - 1) * 1000:
+            if {radishChange} is not set:
+                radishChange()
+                set {radishChange} to true
+            exit loop
+    loop 24 times:
+        if {_time} = ((loop-value) - 1) * 1000 + 500:
+            delete {radishChange}
+            exit loop
+    
+    if {_time} is 0:
+        dayReset()
+    set {_time} to "%{_time}% ticks" parsed as timespan
+    set time of "world_the_end" to 0:00
+    add {_time} to time of "world_the_end"
+    set time of "world" to time of "world_the_end"
+    set time of "IridiumSkyblock" to time of "world"
+    set time of "world_minecraft_wild" to time of "world"

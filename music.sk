@@ -1,0 +1,113 @@
+on join:
+    play sound "custom.intro" in record category with volume 100000 and pitch 1.0 for player
+    send title "&f &f현현의 숲에 어서오세요 &f" to player for 2 seconds
+    
+    set {musicban::%uuid of player%} to true
+    wait 8 seconds
+    delete {musicban::%uuid of player%}
+
+
+on quit:
+    delete {playermusic::%uuid of player%}
+
+function musicChance(p: player):
+    set {_loc} to location of {_p}
+    set {_uuid} to uuid of {_p}
+    if world of {_loc} = "world":
+        if time of "world" is between 0:00 and 0:59:
+            set {_time} to "am12"
+        else if time of "world" is between 1:00 and 1:59:
+            set {_time} to "am1"
+        else if time of "world" is between 2:00 and 2:59:
+            set {_time} to "am2"
+        else if time of "world" is between 3:00 and 3:59:
+            set {_time} to "am3"
+        else if time of "world" is between 4:00 and 4:59:
+            set {_time} to "am4"
+        else if time of "world" is between 5:00 and 5:59:
+            set {_time} to "am5"
+        else if time of "world" is between 6:00 and 6:59:
+            set {_time} to "am6"
+        else if time of "world" is between 7:00 and 7:59:
+            set {_time} to "am7"
+        else if time of "world" is between 8:00 and 8:59:
+            set {_time} to "am8"
+        else if time of "world" is between 9:00 and 9:59:
+            set {_time} to "am9"
+        else if time of "world" is between 10:00 and 10:59:
+            set {_time} to "am10"
+        else if time of "world" is between 11:00 and 11:59:
+            set {_time} to "am11"
+        else if time of "world" is between 12:00 and 12:59:
+            set {_time} to "pm12"
+        else if time of "world" is between 13:00 and 13:59:
+            set {_time} to "pm1"
+        else if time of "world" is between 14:00 and 14:59:
+            set {_time} to "pm2"
+        else if time of "world" is between 15:00 and 15:59:
+            set {_time} to "pm3"
+        else if time of "world" is between 16:00 and 16:59:
+            set {_time} to "pm4"
+        else if time of "world" is between 17:00 and 17:59:
+            set {_time} to "pm5"
+        else if time of "world" is between 18:00 and 18:59:
+            set {_time} to "pm6"
+        else if time of "world" is between 19:00 and 19:59:
+            set {_time} to "pm7"
+        else if time of "world" is between 20:00 and 20:59:
+            set {_time} to "pm8"
+        else if time of "world" is between 21:00 and 21:59:
+            set {_time} to "pm9"
+        else if time of "world" is between 22:00 and 22:59:
+            set {_time} to "pm10"
+        else if time of "world" is between 23:00 and 23:59:
+            set {_time} to "pm11"
+    else if world of {_loc} = "IridiumSkyblock":
+        set {_time} to "house"
+    else if world of {_loc} = "world_minecraft_wild":
+        if y-coord of {_loc} >= 10:
+            set {_time} to "wild"
+        else if y-coord of {_loc} <= -10:
+            set {_time} to "cave"
+    else if world of {_loc} = "world_nether":
+        set {_time} to "hell"
+    set {_uuid} to uuid of {_p}
+    if {_time} is set:
+        if {playermusic::%{_uuid}%} != {_time}:
+            if {musicban::%{_uuid}%} is not true:
+                stop all sounds in record category for {_p}
+                play sound "custom.%{_time}%" in record category with volume 100000 and pitch 1.0 for {_p}
+                set {playermusic::%{_uuid}%} to {_time}
+
+
+# on player move:
+#     musicChance(player)
+
+on join:
+    add 1 to {join::%uuid of player%}
+    if {join::%uuid of player%} = 1:
+        execute console command "/clear %player%"
+        loop {StartItemList::item::*}:
+            set {_item} to loop-value
+            give {_item} to player
+            teleport player to {setspawn}
+        teleport player to {setspawn}
+    
+command /시작아이템:
+    trigger:
+        if player is op:
+            set {StartItemList::row} to 6
+            set {_inv} to chest inventory with {StartItemList::row} row named "시작아이템"
+            loop {StartItemList::item::*}:
+                add 1 to {_slot}
+                if {_slot} > {StartItemList::row} * 9:
+                    exit loop
+                set slot {_slot} - 1 of {_inv} to loop-value
+            open {_inv} to player
+
+on inventory close:
+    event-inventory's display name contain "시작아이템"
+    delete {StartItemList::item::*}
+    loop {StartItemList::row} * 9 times:
+        add slot loop-number - 1 of event-inventory to {StartItemList::item::*}
+    send "&e%{_name}%"

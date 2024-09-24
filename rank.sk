@@ -1,0 +1,29 @@
+function rank(t: text, p: player):
+    loop all offline players:
+        set {_ranklist::%uuid of loop-offline player%} to {%{_t}%::%uuid of loop-offline player%}
+
+    loop {_ranklist::*}:
+        add loop-value to {_value.%loop-value%::*}
+        add loop-index to {_name.%loop-value%::*}
+        set {_rank::%loop-value%} to loop-value
+    set {_low::*} to {_rank::*}
+    loop number of {_low::*} times:
+        set {_n} to number of {_low::*} - loop-number + 1
+        add {_low::%{_n}%} to {_high::*}
+
+    set {_n} to 0
+    loop {_high::*}:
+        add 1 to {_n}
+        loop number of {_name.%loop-value-1%::*} times:
+            set {_1} to {_name.%loop-value-1%::%loop-value-2%}
+            set {_1} to {_1} parsed as offline player
+            set {_name} to name of {_1}
+            if {_value.%loop-value-1%::%loop-number%} >= 1:
+                send "&a%{_n}%. %{_name}% &f%{_value.%loop-value-1%::%loop-number%}%" to {_p}
+
+command /순위 <text> <text> [<player>]:
+    trigger:
+        if arg-1 is "전체":
+            rank(arg 2,player)
+        else:
+            send "&a%arg 3% &f%{%arg 2%::%uuid of arg 3%}%" to player

@@ -1,0 +1,141 @@
+function giveRandomAc():: item:
+    loop {Accessory::item::*}:
+        if loop-value is not air:
+            if itemLv(loop-value) = 1:
+                add loop-value-1 to {_randomAc::*}
+            else:
+                chance of (50 / itemLv(loop-value))%:
+                    add loop-value-1 to {_randomAc::*}
+
+    set {_item} to random element of {_randomAc::*}
+    return {_item}
+
+function giveRandomRc():: item:
+    loop {randomrecipe::item::*}:
+        if loop-value is not air:
+            add loop-value-1 to {_randomRc::*}
+
+    set {_item} to random element of {_randomRc::*}
+    return {_item}
+
+function statTable(p: player, t: text):
+    set {_uuid} to uuid of {_p}
+    if {_t} is "채광" or "농사" or "낚시" or "모험":
+        if {_t} is "채광":
+            set {_text} to "Mine"
+        if {_t} is "농사":
+            set {_text} to "Farm"
+        if {_t} is "낚시":
+            set {_text} to "Fish"
+        if {_t} is "모험":
+            set {_text} to "Adv"
+
+        open chest with 3 rows named "&f%{_t}% 스탯" to {_p}
+        if {stat%{_text}%::%{_uuid}%} is set:
+            set {_statPer} to {stat%{_text}%::%{_uuid}%}
+        else:
+            set {_statPer} to 0
+        
+        set {_statP} to {level::%{_text}%::%{_uuid}%} - {spendStat::%{_uuid}%::%{_text}%}
+        if {_statP} is 0:
+            set {_statP} to "&f남은 스탯 포인트 &c%{_statP}%"
+        else:
+            set {_statP} to "&f남은 스탯 포인트 &a%{_statP}%"
+
+        set slot 2+9 of current inventory of {_p} to ghast tear with custom model data 4 named "&e수익 증가" with lore "&f%{_t}% 관련 품목의 판매 수익이 0.5%{percent}% 증가합니다." and "&7&o현재 %{_statPer}%%{percent}% 증가함"
+        set slot 4+9 of current inventory of {_p} to nether star named "&9스탯 포인트" with lore "&f%{_statP}%"
+        set slot 6+9 of current inventory of {_p} to ghast tear with custom model data 5 named "&9추첨권 획득" with lore "&f추첨권 1장을 획득합니다."
+
+command /퍼센트 <text>:
+    trigger:
+        if player is op:
+            set {percent} to arg 1
+
+command /랜덤악세:
+    trigger:
+        if player is op:
+            give giveRandomAc() to player
+
+on inventory click:
+    if name of event-inventory contains "스탯":
+        cancel event
+        set {_text} to uncolored name of event-inventory
+        replace all " " and "스탯" with "" in {_text}
+        if {_text} is "채광":
+            set {_textP} to "Mine"
+        else if {_text} is "농사":
+            set {_textP} to "Farm"
+        else if {_text} is "낚시":
+            set {_textP} to "Fish"
+        else if {_text} is "모험":
+            set {_textP} to "Adv"
+
+        set {_statP} to {level::%{_textP}%::%uuid of player%} - {spendStat::%uuid of player%::%{_textP}%}
+        if name of event-item contains "수익 증가":
+            if {_statP} >= 1:
+                add 0.5 to {stat%{_textP}%::%uuid of player%}
+                send "&a%{_text}% 판매 수익이 증가했습니다!" to player
+                play sound "entity.experience_orb.pickup" with volume 0.5 to player
+                add 1 to {spendStat::%uuid of player%::%{_textP}%}
+            else:
+                send "&c[ ! ] &f남은 스탯 포인트가 없습니다!" to player
+                close player's inventory
+                play sound "entity.villager.no" with volume 0.5 and pitch 2.0 to player
+        
+        else if name of event-item contains "추첨권 획득":
+            if {_statP} >= 1:
+                set {_item} to ghast tear with custom model data 5 named "&9추첨권" with lore "&f우클릭 시 다양한 아이템으로 변경할 수 있다."
+                if player don't have enough space for {_item}:
+                    send "&a추첨권을 획득했습니다." to player
+                    send "&c[ ! ] &f인벤토리에 공간이 없어 우편함으로 추첨권을 받았습니다." to player
+                    sendMail(player,{_item})
+                else:
+                    send "&a추첨권을 획득했습니다." to player
+                    give {_item} to player
+                play sound "entity.experience_orb.pickup" with volume 0.5 to player
+                add 1 to {spendStat::%uuid of player%::%{_textP}%}
+            else:
+                send "&c[ ! ] &f남은 스탯 포인트가 없습니다!" to player
+                close player's inventory
+                play sound "entity.villager.no" with volume 0.5 and pitch 2.0 to player
+
+on rightclick with ghast tear:
+    if custom model data of player's tool = 5:
+        open chest with 3 rows named "&f추첨권 사용" to player
+
+        set slot 1+9 of current inventory of player to 2 of ghast tear with custom model data 1 named "&f평범한 선물 2개 획득" with lore "&c추첨권 1개 소모" and "&f하급 선물 두 개를 획득합니다."
+        set slot 3+9 of current inventory of player to ghast tear with custom model data 3 named "&d명품 선물 획득" with lore "&c추첨권 2개 소모" and "&f고급 선물 한 개를 획득합니다."
+        set slot 5+9 of current inventory of player to ghast tear with custom model data 6 named "&a무작위 액세서리 획득" with lore "&c추첨권 3개 소모" and "&f무작위 액세서리를 한 개 획득합니다."
+        set slot 7+9 of current inventory of player to ghast tear with custom model data 7 named "&d무작위 레시피 획득" with lore "&c추첨권 3개 소모" and "&f무작위 레시피 한 개를 획득합니다."
+        stop
+
+on inventory click:
+    if name of event-inventory contains "추첨권 사용":
+        cancel event
+    
+        if name of event-item contains "평범한 선물":
+            set {_item} to 2 of ghast tear with custom model data 1 named "&f평범한 선물" with lore "&f우클릭 시 멋진 선물을 받을 수 있다!"
+            set {_need} to 1
+        else if name of event-item contains "명품 선물":
+            set {_item} to 1 of ghast tear with custom model data 3 named "&d명품 선물" with lore "&f우클릭 시 아주 멋진 선물을 받을 수 있다!"
+            set {_need} to 2
+        else if name of event-item contains "무작위 액세서리":
+            set {_item} to giveRandomAc()
+            set {_need} to 3
+        else if name of event-item contains "무작위 레시피":
+            set {_item} to giveRandomRc()
+            set {_need} to 3
+
+        if amount of ghast tear with custom model data 5 in player's inventory >= {_need}:
+            remove {_need} of ghast tear with custom model data 5 from player's inventory
+            send "&a아이템을 획득했습니다!" to player
+            play sound "entity.item.pickup" with volume 0.5 to player 
+
+            if player don't have enough space for {_item}:
+                sendMail(player,{_item})
+                send "&c[ ! ] &f인벤토리에 공간이 없어 우편함으로 선물을 받았습니다." to player
+            else:
+                give {_item} to player
+
+
+            

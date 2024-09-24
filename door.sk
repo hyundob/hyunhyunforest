@@ -1,0 +1,238 @@
+function openChest(p: player, n: number):
+    set {_uuid} to uuid of {_p}
+    set {_inv} to chest inventory with 6 row named "&f%{_p}%의 창고 %{_n}%"
+    loop {houseChest::%{_uuid}%::%{_n}%::item::*}:
+        add 1 to {_slot}
+        if {_slot} > 6 * 9:
+            exit loop
+        set slot {_slot} - 1 of {_inv} to loop-value
+    loop 9 times:
+        set slot 44 + loop-value of {_inv} to barrier named " "
+    if {houseLevel::%{_uuid}%} = 2:
+        set {_maxPage} to 2
+    else if {houseLevel::%{_uuid}%} = 3:
+        set {_maxPage} to 3
+    else if {houseLevel::%{_uuid}%} = 4:
+        set {_maxPage} to 4
+    else if {houseLevel::%{_uuid}%} >= 5:
+        set {_maxPage} to 99
+    if {_maxPage} >= 2:
+        if {_n} < {_maxPage}:
+            set slot 53 of {_inv} to white dye with custom model data 2 named "&a다음 페이지" with lore "&f다음 페이지로 넘어갑니다."
+        if {_n} >= 2:
+            set slot 45 of {_inv} to white dye with custom model data 1 named "&a이전 페이지" with lore "&f이전 페이지로 넘어갑니다."
+    open {_inv} to {_p}
+
+function openMail(p: player, n: number):
+    set {_uuid} to uuid of {_p}
+    set {_inv} to chest inventory with 6 row named "&f%{_p}%의 우편함 %{_n}%"
+    loop {mailbox::%{_uuid}%::item::*}:
+        if loop-value is not air:
+            add 1 to {_slot}
+            set {mailbox::%{_uuid}%::item::%{_slot}%} to loop-value
+            set {_loop} to loop-index parsed as integer
+            if {_loop} != {_slot}:
+                delete {mailbox::%{_uuid}%::item::%loop-index%}
+        else:
+            delete {mailbox::%{_uuid}%::item::%loop-index%}
+    loop 45 times:
+        set {_num} to loop-value + ({_n} - 1) * 45
+        set slot loop-value - 1 of {_inv} to {mailbox::%{_uuid}%::item::%{_num}%}
+    loop 9 times:
+        set slot 44 + loop-value of {_inv} to barrier named " "
+    set {_slot} to 0
+    loop {mailbox::%{_uuid}%::item::*}:
+        add 1 to {_slot}
+    if {_slot} > 45:
+        if {_n} < rounded up {_slot} / 45:
+            set slot 53 of {_inv} to white dye with custom model data 2 named "&a다음 페이지" with lore "&f다음 페이지로 넘어갑니다."
+    if {_n} >= 2:
+        set slot 45 of {_inv} to white dye with custom model data 1 named "&a이전 페이지" with lore "&f이전 페이지로 넘어갑니다."
+    open {_inv} to {_p}
+
+
+on place of oak door or spruce door or birch door or jungle door or acacia door or dark oak door or mangrove door or cherry door or bamboo door or crimson door or warped door or iron door:
+    if past event-block is water:
+        cancel event
+        send "&c[ ! ] &f물 안에는 집을 설치할 수 없습니다!" to player
+    else if event-world is not "world":
+        cancel event
+        send "&c[ ! ] &f집은 혀누 섬에만 설치할 수 있습니다!" to player
+    else:
+        if {house::%uuid of player%::location} is not set:
+            set {getHouse::%uuid of player%} to true
+            set {house::%uuid of player%::location} to event-location
+            set {playerisHouse::%uuid of player%} to player
+            set {pastLoc::%uuid of player%} to player's location
+            execute player command "/island create"
+        else:
+            set {house::%uuid of player%::location} to event-location
+
+on break of oak door or spruce door or birch door or jungle door or acacia door or dark oak door or mangrove door or cherry door or bamboo door or crimson door or warped door or iron door:
+    if event-world is not "world":
+        cancel drops
+    if the block below target block is oak door or spruce door or birch door or jungle door or acacia door or dark oak door or mangrove door or cherry door or bamboo door or crimson door or warped door or iron door:
+        set {_loc} to target block's location
+        set {_loc}'s y-coord to {_loc}'s y-coord - 1
+    else:
+        set {_loc} to target block's location
+    loop all offline players:
+        set {_uuid} to uuid of loop-offline player
+        if {house::%{_uuid}%::location} = {_loc}:
+            set {_player} to loop-offline player
+    if {_player} != player:
+        send "&c[ ! ] &f남의 집문은 파괴할 수 없습니다." to player
+        cancel event
+
+on break:
+    if event-block is not oak door or spruce door or birch door or jungle door or acacia door or dark oak door or mangrove door or cherry door or bamboo door or crimson door or warped door or iron door:
+        if event-world is "world" or "IridiumSkyblock":
+            if the block above target block is oak door or spruce door or birch door or jungle door or acacia door or dark oak door or mangrove door or cherry door or bamboo door or crimson door or warped door or iron door:
+                send "&c[ ! ] &f집문 아래 블록은 파괴할 수 없습니다." to player
+                cancel event
+
+on right click on oak door or spruce door or birch door or jungle door or acacia door or dark oak door or mangrove door or cherry door or bamboo door or crimson door or warped door or iron door:
+    if event-world is "world":
+        cancel event
+        if the block below target block is oak door or spruce door or birch door or jungle door or acacia door or dark oak door or mangrove door or cherry door or bamboo door or crimson door or warped door or iron door:
+            set {_loc} to target block's location
+            set {_loc}'s y-coord to {_loc}'s y-coord - 1
+        else:
+            set {_loc} to target block's location
+        loop all offline players:
+            set {_uuid} to uuid of loop-offline player
+            if {house::%{_uuid}%::location} = {_loc}:
+                set {_player} to loop-offline player
+        
+        if {_player} = player:
+            if player is not sneaking:
+                set {pastLoc::%uuid of player%} to player's location
+                execute player command "/is home"
+                set {playerisHouse::%uuid of player%} to {_player}
+                if {mailbox::%uuid of player%::item::1} is set:
+                    send "&e우편함에 우편이 도착해있습니다." to player
+            else:
+                open chest with 1 rows named "&f집 메뉴" to player
+
+                set slot 2 of current inventory of player to nether star named "&a액세서리 장착하기" with lore "&f액세서리를 장착합니다."
+                set slot 4 of current inventory of player to barrier named "&a창고 열기" with lore "&f창고를 엽니다." and "&c!!! 사라지는 버그 있음 되도록 사용 금지 !!!"
+                set slot 6 of current inventory of player to paper named "&a우편함 열기" with lore "&f우편함을 엽니다."
+        else:
+            if {getHouse::%uuid of player%} is true:
+                set {_pplayer} to uuid of {_player}
+                if {_player} is online:
+                    if {playerisHouse::%{_pplayer}%} is {_player}:
+                        set {pastLoc::%uuid of player%} to player's location
+                        execute player command "/is visit %{_player}%"
+                        set {playerisHouse::%uuid of player%} to {_player}
+                    else:
+                        if {name::%{_pplayer}%} is set:
+                            send "&f잠시 외출 중! &7&o~ %{name::%{_pplayer}%}% ~" to player
+                else:
+                    if {name::%{_pplayer}%} is set:
+                        send "&f잠시 외출 중! &7&o~ %{name::%{_pplayer}%}% ~" to player
+            else:
+                send "&c[ ! ] &f본인 집을 생성해야 남의 집을 방문할 수 있습니다." to player
+        stop
+    if event-world is "IridiumSkyblock":
+        if {playerisHouse::%uuid of player%} is player:
+            cancel event
+            open chest with 1 rows named "&f집 메뉴" to player
+
+            set slot 2 of current inventory of player to nether star named "&a액세서리 장착하기" with lore "&f액세서리를 장착합니다."
+            set slot 4 of current inventory of player to barrier named "&a창고 열기" with lore "&f창고를 엽니다." and "&c!!! 사라지는 버그 있음 되도록 사용 금지 !!!"
+            set slot 6 of current inventory of player to paper named "&a우편함 열기" with lore "&f우편함을 엽니다."
+        stop
+
+command /집:
+    trigger:
+        if player is op:
+            teleport player to {pastLoc::%uuid of player%}
+
+on inventory click:
+    if event-inventory's display name contain "집 메뉴":
+        cancel event
+        clicked inventory is player' current inventory
+        event-slot is not air
+        set {_item} to event-item
+        if {_item}'s name contains "창고 열기":
+            openChest(player,1)
+        if {_item}'s name contains "우편함 열기":
+            openMail(player,1)
+        if {_item}'s name contains "액세서리 장착하기":
+            openAccessory(player)
+    if event-inventory's display name contain "의 창고":
+        if event-item is white dye with custom model data 2:
+            set {_page} to uncolored event-inventory's display name
+            replace all "%player%의" and " " and "창고" with "" in {_page}
+            set {_page} to {_page} parsed as integer 
+            add 1 to {_page}
+            close player's inventory
+            openChest(player,{_page})
+        if event-item is white dye with custom model data 1:
+            set {_page} to uncolored event-inventory's display name
+            replace all "%player%의" and " " and "창고" with "" in {_page}
+            set {_page} to {_page} parsed as integer 
+            add -1 to {_page}
+            close player's inventory
+            openChest(player,{_page})
+        if event-slot is barrier:
+            cancel event
+        if line 1 of lore of event-item is "&9물고기":
+            send "&c[ ! ] &f물고기는 창고에 보관할 수 없습니다."
+            cancel event
+    if event-inventory's display name contain "의 우편함":
+        cancel event
+        clicked inventory is player' current inventory
+        event-slot is not air
+        if index of event-slot < 45:
+            if player don't have enough space for event-item:
+                send "&c[ ! ] &f인벤토리에 빈 공간이 없어 수령할 수 없습니다."
+            else:
+                give event-item to player
+                set {_page} to uncolored event-inventory's display name
+                replace all "%player%의" and " " and "우편함" with "" in {_page}
+                set {_page} to {_page} parsed as integer
+                set {_num} to index of event-slot + 1 + ({_page} - 1)*45
+                delete {mailbox::%uuid of player%::item::%{_num}%}
+                openMail(player,{_page})
+        if event-item is white dye with custom model data 2:
+            set {_page} to uncolored event-inventory's display name
+            replace all "%player%의" and " " and "우편함" with "" in {_page}
+            set {_page} to {_page} parsed as integer 
+            add 1 to {_page}
+            openMail(player,{_page})
+        if event-item is white dye with custom model data 1:
+            set {_page} to uncolored event-inventory's display name
+            replace all "%player%의" and " " and "우편함" with "" in {_page}
+            set {_page} to {_page} parsed as integer 
+            add -1 to {_page}
+            openMail(player,{_page})
+
+on inventory close:
+    event-inventory's display name contain "창고"
+    set {_name} to uncolored event-inventory's display name
+    replace "%player%의 창고" and " " with "" in {_name}
+    set {_name} to {_name} parsed as integer
+    delete {houseChest::%uuid of player%::%{_name}%::item::*}
+    loop 54 times:
+        add slot loop-number - 1 of event-inventory to {houseChest::%uuid of player%::%{_name}%::item::*}
+    # loop {houseChest::%uuid of player%::%{_name}%::item::*}:
+    #     send "%loop-value%" to player
+
+on player move:
+    if event-world is "IridiumSkyblock":
+        if the block above event-block is oak door:
+            set yaw of {pastLoc::%uuid of player%} to yaw of {pastLoc::%uuid of player%} + 180
+            teleport the player to {pastLoc::%uuid of player%}
+            delete {playerisHouse::%uuid of player%}
+        if {border::%uuid of player%} is not set:
+            execute player command "/is border OFF"
+            set {border::%uuid of player%} to 1
+    
+on craft:
+    if event-slot is oak door or spruce door or birch door or jungle door or acacia door or dark oak door or mangrove door or cherry door or bamboo door or crimson door or warped door or iron door:
+        if player is not op:
+            cancel event
+            send "&c[ ! ] &f제작이 금지된 아이템입니다." to player
+            close player's inventory

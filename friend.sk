@@ -1,0 +1,167 @@
+on load:
+    set {friendCooldown} to 900
+
+function addFriendP(p: offline player, t: offline player, n: number):
+    set {_puuid} to uuid of {_p}
+    set {_tuuid} to uuid of {_t}
+
+    add {_n} to {friend::%{_puuid}%::%{_tuuid}%}
+    set {friend::%{_tuuid}%::%{_puuid}%} to {friend::%{_puuid}%::%{_tuuid}%}
+
+
+on rightclick on player:
+    if player is sneaking:
+        set {_target} to target
+        if {_target} is set:
+            set {friendTarget::%uuid of player%} to target
+            set {_tuuid} to uuid of target
+            set {_uuid} to uuid of player
+            open chest with 5 rows named "&f친구 메뉴 | %{name::%{_tuuid}%}%" to player
+
+            if {friend::%uuid of player%::%uuid of target%} is not set:
+                set {friend::%uuid of player%::%uuid of target%} to 0
+            set {_friend} to {friend::%uuid of player%::%uuid of target%}
+            if {_friend} >= 3000:
+                set {_friendText} to "&d혀누급 친구"
+            else if {_friend} >= 1000:
+                set {_friendText} to "&a절친"
+            else if {_friend} >= 300:
+                set {_friendText} to "&e친구"
+            else if {_friend} >= 100:
+                set {_friendText} to "&6지인"
+            else:
+                set {_friendText} to "&4어색한 사이..."
+
+            set slot 2+9 of current inventory of player to lime wool named "&a칭찬하기" with lore "&f상대와의 호감도를 5만큼 올립니다." and "" and "&c❤ &f+5"
+            if {present::%uuid of player%::%{_tuuid}%} = true:
+                set slot 4+9 of current inventory of player to ghast tear with custom model data 1 named "&e선물 주기" with lore "&f보유하고 있는 선물 하나를 상대에게 줍니다." and "" and "&c❤ &f+25 &7&o(이미 선물함)"
+            else:
+                set slot 4+9 of current inventory of player to ghast tear with custom model data 1 named "&e선물 주기" with lore "&f보유하고 있는 선물 하나를 상대에게 줍니다." and "" and "&c❤ &f+50"
+            set slot 6+9 of current inventory of player to red wool named "&c험담하기" with lore "&f상대와의 호감도를 5만큼 내립니다." and "" and "&c💔 &f-5"
+            set slot 4+27 of current inventory of player to nether star named "&9현재 상대와의 호감도" with lore "%{_friendText}% &c❤ &f%{_friend}%"
+
+on inventory click:
+    if event-inventory's name contain "친구 메뉴":
+        cancel event
+        if name of event-item contain "칭찬하기":
+            set {_tuuid} to uuid of {friendTarget::%uuid of player%}
+            if {friendTime} >= {cooldown::%uuid of player%::%{_tuuid}%} + {friendCooldown}:
+                send "&a%{name::%{_tuuid}%}%님을 칭찬했습니다!" to player
+                play sound "entity.player.levelup" to the player
+                send "&a%{name::%uuid of player%}%님이 당신을 칭찬했습니다!" to {friendTarget::%uuid of player%}
+                play sound "entity.player.levelup" to {friendTarget::%uuid of player%}
+                addFriendP(player,{friendTarget::%uuid of player%},5)
+                set {cooldown::%uuid of player%::%{_tuuid}%} to {friendTime}
+                close player's inventory
+
+                #거대 말파이트
+                if storeAccessory(player,106) >= 1:
+                    play sound "custom.malphite" with volume 1 and pitch a random number between 0.5 and 2 at location of player
+            else:
+                set {_cooldown} to {cooldown::%uuid of player%::%{_tuuid}%} + {friendCooldown} - {friendTime}
+                send "&c[ ! ] &f%{_cooldown}%초 뒤에 다시 가능합니다." to player
+                close player's inventory
+        if name of event-item contain "험담하기":
+            set {_tuuid} to uuid of {friendTarget::%uuid of player%}
+            if storeAccessory({friendTarget::%uuid of player%},116) >= 1:
+                send "&c[ ! ] &f%{name::%{_tuuid}%}%님은 애증의 상징을 갖고 있어 험담할 수 없습니다!" to player
+                close player's inventory
+            else:
+                if {friendTime} >= {cooldown::%uuid of player%::%{_tuuid}%} + {friendCooldown}:
+                    send "&a%{name::%{_tuuid}%}%님을 험담했습니다!" to player
+                    play sound "entity.allay.hurt" to the player
+                    send "&c%{name::%uuid of player%}%님이 당신을 험담했습니다!" to {friendTarget::%uuid of player%}
+                    play sound "entity.allay.hurt" to {friendTarget::%uuid of player%}
+                    addFriendP(player,{friendTarget::%uuid of player%},-5)
+                    set {cooldown::%uuid of player%::%{_tuuid}%} to {friendTime}
+                    close player's inventory
+                else:
+                    set {_cooldown} to {cooldown::%uuid of player%::%{_tuuid}%} + {friendCooldown} - {friendTime}
+                    send "&c[ ! ] &f%{_cooldown}%초 뒤에 다시 가능합니다." to player
+                    close player's inventory
+        if name of event-item contain "선물 주기":
+            set {_tuuid} to uuid of {friendTarget::%uuid of player%}
+            if amount of ghast tear with custom model data 2 in player's inventory >= 1:
+                remove 1 of ghast tear with custom model data 2 from player's inventory
+                if {present::%uuid of player%::%{_tuuid}%} = true:
+                    addFriendP(player,{friendTarget::%uuid of player%},25)
+                    set {_item} to 1 of ghast tear with custom model data 1 named "&f%{name::%uuid of player%}%의 선물" with lore "&f우클릭 시 멋진 선물을 받을 수 있다!"
+                else:
+                    addFriendP(player,{friendTarget::%uuid of player%},50)
+                    set {present::%uuid of player%::%{_tuuid}%} to true
+                    set {_item} to 1 of ghast tear with custom model data 3 named "&d%{name::%uuid of player%}%의 명품 선물" with lore "&f우클릭 시 아주 멋진 선물을 받을 수 있다!"
+                if {friendTarget::%uuid of player%} don't have enough space for {_item}:
+                    send "&a%{name::%{_tuuid}%}%님에게 선물을 주었습니다!" to player
+                    send "&a%{name::%uuid of player%}%님에게 선물을 받았습니다!" to {friendTarget::%uuid of player%}
+                    send "&c[ ! ] &f인벤토리에 공간이 없어 우편함으로 선물을 받았습니다." to {friendTarget::%uuid of player%}
+                    play sound "entity.cat.ambient" to the player
+                    play sound "entity.cat.ambient" to {friendTarget::%uuid of player%}
+                    sendMail({friendTarget::%uuid of player%},{_item})
+                else:
+                    send "&a%{name::%{_tuuid}%}%님에게 선물을 주었습니다!" to player
+                    send "&a%{name::%uuid of player%}%님에게 선물을 받았습니다!" to {friendTarget::%uuid of player%}
+                    play sound "entity.cat.ambient" to the player
+                    play sound "entity.cat.ambient" to {friendTarget::%uuid of player%}
+                    give {_item} to {friendTarget::%uuid of player%}
+            else:
+                send "&c[ ! ] &f인벤토리에 줄 선물이 없습니다!" to player
+            close player's inventory
+
+on damage of player:
+    if attacker is player:
+        damage cause is attack
+        set {_uuid} to attacker
+        set {_tuuid} to victim
+        if storeAccessory(victim,116) >= 1:
+            set {_sans} to true
+        else:
+            chance of 10%:
+                send "&f친구를 때려 호감도가 감소합니다... &c❤ &f-1" to attacker
+                send "&f친구에게 맞아 호감도가 감소합니다... &c❤ &f-1" to victim
+                addFriendP(attacker,victim,-1)
+
+every 60 seconds:
+    loop all players:
+        if loop-player is in "world":
+            set {_r} to 15
+        else:
+            set {_r} to 30
+        loop all players in radius {_r} around loop-player-1:
+            if loop-player-1 != loop-player-2:
+                if storeAccessory(loop-player-1,115) >= 1:
+                    chance of operationAc(storeAccessory(loop-player-1,115),50,100)%:
+                        set {_loc} to location of loop-player-1 ~ vector(0,2,0)
+                        show 1 heart with speed 0 at {_loc}
+                        set {_ac115::%loop-player-1%} to rounded operationAc(storeAccessory(loop-player-1,115),3,15)
+
+                set {_addFriendship} to 0.5 + {_ac115::%loop-player-1%}
+                addFriendP(loop-player-1,loop-player-2,{_addFriendship})
+
+every 1 seconds:
+    add 1 to {friendTime}
+    loop all players:
+        if loop-player is in "world":
+            set {_r} to 15
+        else:
+            set {_r} to 30
+        loop all players in radius {_r} around loop-player-1:
+            if loop-player-1 != loop-player-2:
+                set {_puuid} to uuid of loop-player-1
+                set {_tuuid} to uuid of loop-player-2
+                if {friend::%{_puuid}%::%{_tuuid}%} >= 3000:
+                    set {_buff} to 2
+                else:
+                    set {_buff} to 1
+                if {friend::%{_puuid}%::%{_tuuid}%} >= 1000:
+                    remove resistance from loop-player-1
+                    remove strength from loop-player-1
+                    apply resistance potion of tier {_buff} without any particles whilst hiding the potion icon to the loop-player-1 for 10 seconds
+                    apply strength potion of tier {_buff} without any particles whilst hiding the potion icon to the loop-player-1 for 10 seconds
+                if {friend::%{_puuid}%::%{_tuuid}%} >= 300:
+                    remove speed from loop-player-1
+                    remove haste from loop-player-1
+                    apply speed potion of tier {_buff} without any particles whilst hiding the potion icon to the loop-player-1 for 10 seconds
+                    if storeAccessory(loop-player-1,102) >= 1:
+                        set {_sans} to true
+                    else:
+                        apply haste potion of tier {_buff} without any particles whilst hiding the potion icon to the loop-player-1 for 10 seconds

@@ -1,0 +1,34 @@
+on death of a player:
+	if amount of ghast tear with custom model data 6 in victim's inventory >= 1:
+		keep the inventory and experiences
+		clear drops
+		remove 1 of ghast tear with custom model data 6 from victim's inventory
+		send "&a인벤토리 보호권을 사용하여 인벤토리를 보호하였습니다." to victim
+
+on respawn:
+	teleport player to {setspawn}
+
+on rightclick holding ghast tear:
+	if custom model data of player's tool = 7:
+		cancel event
+		if {afk::%uuid of player%} is not true:
+			if storeAccessory(player,129) >= 1:
+				set {ac129::speed::%uuid of player%} to operationAc(storeAccessory(player,129),0.024,0.8)
+				set {ac129::duration::%uuid of player%} to operationAc(storeAccessory(player,129),4,120)
+				set {ac129::start::%uuid of player%} to {accessorytime}
+			remove 1 of player's tool with custom model data 7 from player's tool
+			teleport player to {setspawn}
+			delete {wildTime::%uuid of player%}
+			send "&a마을 귀환권을 사용하여 마을로 귀환했습니다." to player
+		else:
+			send "&c[ ! ] &f혼나는 도중엔 마을로 이동할 수 없다!" to player
+
+command /부활위치:
+	trigger:
+		if player is op:
+			set {setspawn} to player's location
+			set x-coord of {setspawn} to rounded x-coord of {setspawn}
+			set y-coord of {setspawn} to rounded y-coord of {setspawn}
+			set z-coord of {setspawn} to rounded z-coord of {setspawn}
+			set yaw of {setspawn} to 180
+			set pitch of {setspawn} to 0

@@ -1,0 +1,41 @@
+command /박물관열기 [<text>]:
+    trigger:
+        if arg 1 is "1050":
+            set {_inv} to chest inventory with 3 rows named "박물관"
+
+            set slot 2 + 9 of {_inv} to book named "&5물고기 도감" with lore "&f물고기 도감을 엽니다."
+            set slot 4 + 9 of {_inv} to ghast tear with custom model data 12 named "&9화석 감정받기" with lore "&f화석을 감정받습니다."
+            set slot 6 + 9 of {_inv} to book named "&9화석 도감" with lore "&f화석 도감을 엽니다."
+            open {_inv} to player
+
+on inventory click:
+    if name of event-inventory contains "박물관":
+        cancel event
+        if name of event-item contains "물고기 도감":
+            fishMuseum(player,1)
+        else if name of event-item contains "화석 도감":
+            fossilMuseum(player,1)
+        else if name of event-item contains "화석 감정받기":
+            set {_inv} to chest inventory with 1 rows named "화석 감정받기"
+            set slot 4 of {_inv} to nether star named "&9화석 감정받기" with lore "&f인벤토리 내 감정받을 화석을 더블 클릭해주세요." and "" and "&7&o- 미감정된 화석만 감정받을 수 있습니다."
+            open {_inv} to player
+
+    if name of event-inventory contains "화석 감정받기":
+        cancel event
+        if clicked inventory is not player' current inventory:
+            if "%click type%" contain "DOUBLE":
+                if line 1 of lore of event-item contains "미감정됨":
+                    if name of event-item contains "희귀":
+                        set {_epic} to 1
+                    else:
+                        set {_epic} to 0
+
+                    set item amount of event-item to item amount of event-item - 1
+                    set {_item} to randomFossil({_epic})
+                    play sound "block.grindstone.use" with volume 0.5 to player
+
+                    if player don't have enough space for {_item}:
+                        sendMail(player,{_item})
+                        send "&c[ ! ] &f인벤토리에 빈 공간이 없어 우편으로 아이템을 수령했습니다." to player 
+                    else:
+                        give {_item} to player

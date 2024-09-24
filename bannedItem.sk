@@ -1,0 +1,79 @@
+command /금지아이템:
+    trigger:
+        if player is op:
+            set {_inv} to chest inventory with 6 row named "&f금지 아이템"
+
+            loop {banList::item::*}:
+                add 1 to {_slot}
+                if {_slot} > 6 * 9:
+                    exit loop
+                set slot {_slot} - 1 of {_inv} to loop-value
+            open {_inv} to player
+
+on craft:
+    if event-slot is fishing rod:
+        cancel event
+        set {_item} to event-slot
+        if "%click type%" contain "SHIFT":
+            cancel event
+            send "&c[ ! ] &f도구를 제작할 땐 Shift를 누를 수 없습니다."
+            stop
+        set line 1 of lore of {_item} to "&9낚시 도구"
+        set line 2 of lore of {_item} to "&f아이템 레벨 1"
+        loop 9 times:
+            set slot loop-number of player's current inventory to air
+        loop integers from 0 to 35:
+            slot loop-integer of inventory of player is air
+            add 1 to {_count}
+            {_count} >= 1
+            set {_result} to true
+        if {_result} is true:
+            give {_item} to player
+        else:
+            drop {_item} at player without velocity
+
+on explode:
+	cancel the event
+	create a safe explosion of force 1 at event-location
+
+on item damage:
+    if "%player's tool%" contains "gold":
+        chance of 96%:
+            cancel event
+
+on spawn of wandering trader:
+    cancel event
+
+on spawn of trader llama:
+    cancel event
+
+on inventory close:
+    event-inventory's display name contain "금지 아이템"
+    set {_name} to event-inventory's display name
+    replace "낚시목록" and " " with "" in {_name}
+    delete {banList::item::*}
+    loop 6 * 9 times:
+        add slot loop-number - 1 of event-inventory to {banList::item::*}
+    send "&e%{_name}%"
+
+on craft:
+    loop {banList::item::*}:
+        if event-item = loop-value:
+            cancel event
+            send "&c[ ! ] &f제작이 금지된 아이템입니다." to player
+            close player's inventory
+
+on break:
+    if event-world is not "world" or "IridiumSkyblock":
+        loop {banList::item::*}:
+            if event-block's drops = loop-value:
+                cancel drops
+
+on place:
+    if event-world is not "world" or "IridiumSkyblock":
+        loop {banList::item::*}:
+            if event-block's drops = loop-value:
+                cancel event
+
+every 5 minutes:
+    execute console command "/save-all"

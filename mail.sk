@@ -1,0 +1,21 @@
+function sendMail(p: offline player, i: item):
+    set {_uuid} to uuid of {_p}
+    add {_i} to {mailbox::%{_uuid}%::item::*}
+
+command /우편함 <text> [<player>]:
+    trigger:
+        if player's tool is not air:
+            if arg 1 is "개인":
+                set {_uuid} to uuid of arg 2
+                add player's tool to {mailbox::%{_uuid}%::item::*}
+                send "&a성공적으로 우편을 보냈습니다!" to player
+            else if arg 1 is "모두":
+                loop all offline players:
+                    set {_uuid} to uuid of loop-offline player
+                    sendMail(loop-offline player,player's tool)
+                send "&a성공적으로 우편을 보냈습니다!" to player
+            else:
+                send "&c[ ! ] &f/우편함 개인/모두" to player
+        else:
+            send "&c[ ! ] &f보낼 아이템을 손에 들어야합니다." to player
+

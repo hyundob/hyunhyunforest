@@ -1,0 +1,26 @@
+on consume:
+    if name of event-item contains "독한":
+        set {drunk::%uuid of player%} to true
+        set {drunkstack::%uuid of player%} to 0
+        apply nausea potion of tier 1 without any particles whilst hiding the potion icon to the player for 100 days
+        send "&c토할 것 같다... &7&o(아래를 보고 웅크려보자)"
+
+every 1 ticks:
+    loop all players:
+        if {drunk::%uuid of loop-player%} is true:
+            if pitch of location of loop-player is between 70 and 90:
+                if loop-player is sneaking:
+                    show 50 landing honey with offset of 0.1, 0.1, 0.1 and speed 1 at location of loop-player ~ vector(0,1,0)
+                    play sound "block.honey_block.slide" with volume 1 and pitch 1 at loop-player
+                    add 1 to {drunkstack::%uuid of loop-player%}
+                    if {drunkstack::%uuid of loop-player%} >= 60:
+                        delete {drunk::%uuid of loop-player%}
+                        delete {drunkstack::%uuid of loop-player%}
+                        send "&a속이 말끔해졌어!" to loop-player
+                        play sound "entity.player.levelup" with volume 1 and pitch 1 for loop-player
+                        remove nausea from loop-player
+                        execute console command "/effect clear %loop-player% nausea"
+                else:
+                    delete {drunkstack::%uuid of loop-player%}
+            else:
+                delete {drunkstack::%uuid of loop-player%}

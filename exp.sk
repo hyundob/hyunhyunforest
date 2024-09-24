@@ -1,0 +1,68 @@
+function getExp(x: string, p: player):
+    set {_uuid} to uuid of {_p}
+
+    if storeAccessory({_p},137) >= 1:
+        chance of operationAc(storeAccessory({_p},137),10,100)%:
+            set {_looptime} to operationAc(storeAccessory({_p},137),1,3)
+            show 50 blue dust with offset of 0.5, 0.5, 0.5 and speed 0.01 at location of {_p} ~ vector(0,1,0)
+
+    if {level::%{_x}%::%{_uuid}%} >= 50:
+        set {_num} to {level::%{_x}%::%{_uuid}%} - 49
+        set {_levelper} to 100 * (1 / (log(2 * {_num}) + 1))
+    else:
+        set {_levelper} to 100
+    loop 1 + {_looptime} times:
+        chance of {_levelper}%:
+            set {_true} to true
+            if {_x} is "mine":
+                add 1 to {exp::%{_x}%::%{_uuid}%}
+            add 1 to {exp::%{_x}%::%{_uuid}%}
+    
+    if {_true} is true:
+        play sound "entity.experience_orb.pickup" with volume 0.5 to {_p}
+
+        if {level::%{_x}%::%{_uuid}%} is not set:
+            set {level::%{_x}%::%{_uuid}%} to 0
+
+        if {level::%{_x}%::%{_uuid}%} is between 0 and 15:
+            set {expMax::%{_x}%::%{_uuid}%} to 2 * {level::%{_x}%::%{_uuid}%} + 7
+        else if {level::%{_x}%::%{_uuid}%} is between 16 and 30:
+            set {expMax::%{_x}%::%{_uuid}%} to 5 * {level::%{_x}%::%{_uuid}%} - 38
+        else if {level::%{_x}%::%{_uuid}%} >= 31:
+            set {expMax::%{_x}%::%{_uuid}%} to 9 * {level::%{_x}%::%{_uuid}%} - 158
+        
+        while {exp::%{_x}%::%{_uuid}%} >= {expMax::%{_x}%::%{_uuid}%}:
+            set {exp::%{_x}%::%{_uuid}%} to {exp::%{_x}%::%{_uuid}%} - {expMax::%{_x}%::%{_uuid}%}
+            add 1 to {level::%{_x}%::%{_uuid}%}
+            play sound "entity.player.levelup" with volume 0.5 to {_p}
+            if {level::%{_x}%::%{_uuid}%} is between 0 and 15:
+                set {expMax::%{_x}%::%{_uuid}%} to 2 * {level::%{_x}%::%{_uuid}%} + 7
+            else if {level::%{_x}%::%{_uuid}%} is between 16 and 30:
+                set {expMax::%{_x}%::%{_uuid}%} to 5 * {level::%{_x}%::%{_uuid}%} - 38
+            else if {level::%{_x}%::%{_uuid}%} >= 31:
+                set {expMax::%{_x}%::%{_uuid}%} to 9 * {level::%{_x}%::%{_uuid}%} - 158
+        
+        if {_x} is "mine":
+            set {_text} to "채광"
+        else if {_x} is "farm":
+            set {_text} to "농사"
+        else if {_x} is "fish":
+            set {_text} to "낚시"
+        else if {_x} is "adv":
+            set {_text} to "모험"
+
+        create bossbar titled "&f%{_text}% 레벨 &a%{level::%{_x}%::%{_uuid}%}% &f[%{exp::%{_x}%::%{_uuid}%}%/%{expMax::%{_x}%::%{_uuid}%}%]" and id "level.%{_uuid}%" for {_p} with progress 100 * {exp::%{_x}%::%{_uuid}%} / {expMax::%{_x}%::%{_uuid}%} with colors green
+        set bossbar "level.%{_uuid}%" value to 100 * {exp::%{_x}%::%{_uuid}%} / {expMax::%{_x}%::%{_uuid}%}
+        add 50 to {bossbar::%{_uuid}%}
+    
+    
+        while {bossbar::%{_uuid}%} >= 1:
+            set {bossbar::%{_uuid}%} to {bossbar::%{_uuid}%} - 1
+            if {bossbar::%{_uuid}%} = 1:
+                remove bossbar "level.%{_uuid}%"
+            wait 2 ticks
+
+command /경험치추가 <text>:
+    trigger:
+        if player is op:
+            getExp("%arg-1%",player)

@@ -1,0 +1,30 @@
+on player move:
+    if player's gamemode is not creative or spectator:
+        disable fly for player
+#     if storeAccessory(player,140) >= 1:
+#         if {canjump.%player%} is not set:
+#             allow fly for player
+
+# on flight toggle:
+#     if player's gamemode is not creative:
+#         if storeAccessory(player,140) >= 1:
+#             cancel event
+#             if {canjump.%player%} is not set:
+#                 set {canjump.%player%} to false
+#                 push player upwards at speed 0.1
+#                 push player forwards at speed 1
+#                 play sound "entity.ender_dragon.flap" in ambient category with volume 2 and pitch 2 at location of player
+#                 show 100 snowflake with offset of 0.3, 0.5, 0.3 and speed 0.1 at location of player ~ vector(0,0.5,0)
+#                 wait 3 seconds
+#                 delete {canjump.%player%}
+#     # else:
+#     #     cancel event
+#     # disable fly for players
+
+# on damage of player:
+#     if {canjump.%victim%} is false:
+#         cancel event
+
+# command /canjump <player>:
+#     trigger:
+#         delete {canjump.%arg 1%}

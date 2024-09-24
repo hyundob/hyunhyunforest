@@ -1,0 +1,54 @@
+on chat:
+    if {name::%uuid of player%} is set:
+        if player is op:
+            set message format to "&c[운영자] &f%{name::%uuid of player%}% | &f%message%"
+        else:
+            set message format to "&f%{name::%uuid of player%}% | &f%message%"
+    else:
+        cancel event
+        send "&c[ ! ] &f닉네임을 변경해야 채팅을 입력할 수 있습니다."
+        send "&c[ ! ] &f/닉네임 &o[변경할 이름]"
+        
+command /귓 [<text>] [<text>]:
+    trigger:
+        loop all players:
+            if arg-1 = "%{name::%uuid of loop-player%}%":
+                set {_name} to loop-player
+            set {_player} to arg 1 parsed as player
+            if loop-player is {_player}:
+                set {_name} to loop-player
+        if {_name} is set:
+            set {_uuid} to uuid of {_name}
+            send "&a%{name::%{_uuid}%}%님에게 보냄 &f%arg 2%" to player
+            send "&c%{name::%uuid of player%}%님에게 받음 &f%arg 2%" to {_name}
+            play sound "block.note_block.bell" with volume 2 and pitch 1 for {_name} 
+        else:
+            send "&c[ ! ] &f이름이 틀렸거나 잘못된 형식의 입력입니다!" to player
+            send "&c[ ! ] &f/귓 [닉네임] [할 말]" to player
+
+command /닉네임 [<string>] :
+    trigger:
+        if {name::%uuid of player%} is not set:
+            if arg 1 is set:
+                if length of the arg 1 >= 4:
+                    send "&c[ ! ] &f닉네임은 세 글자를 초과할 수 없습니다."
+                else:
+                    set {name::%uuid of player%} to arg 1
+                    execute console command "/nte player %player% suffix &7(%arg-1%)"
+                    message "&a닉네임을 성공적으로 바꾸었습니다!" to player
+            else:
+                send "&c바꿀 이름을 입력해주십시오." to player
+        else:
+            send "&c[ ! ] &f닉네임을 이미 변경했습니다."
+
+command /닉네임초기화 <player>:
+    trigger:
+        if player is op:
+            delete {name::%uuid of arg 1%}
+            message "&a%arg 1%님의 닉네임을 성공적으로 제거했습니다." to player
+
+on player move:
+    if {name::%uuid of player%} is not set:
+        cancel event
+        send "&c[ ! ] &f닉네임을 변경해주세요." to player
+        send "&c[ ! ] &f/닉네임 &o[변경할 이름]" to player

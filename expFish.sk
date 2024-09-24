@@ -1,0 +1,4 @@
+on fishing:
+    if "%fishing state%" contains "caught_fish":
+        set item of caught fish to randomFish(player)
+        getExp("fish",player)

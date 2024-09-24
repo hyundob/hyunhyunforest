@@ -1,0 +1,63 @@
+command /선물 <text> <text>:
+    trigger:
+        if player is op:
+            if arg 1 is "고급":
+                set {_level} to "고급"
+            else:
+                set {_level} to "일반"
+
+            if arg 2 is "설정":
+                set {PresentList::%{_level}%::row} to 6
+                set {_inv} to chest inventory with {PresentList::%{_level}%::row} row named "선물목록 %{_level}%"
+                loop {PresentList::%{_level}%::item::*}:
+                    add 1 to {_slot}
+                    if {_slot} > {PresentList::%{_level}%::row} * 9:
+                        exit loop
+                    set slot {_slot} - 1 of {_inv} to loop-value
+                open {_inv} to player
+
+on inventory close:
+    event-inventory's display name contain "선물목록"
+    set {_name} to uncolored event-inventory's display name
+    replace "선물목록" and " " with "" in {_name}
+    delete {PresentList::%{_name}%::item::*}
+    loop {PresentList::%{_name}%::row} * 9 times:
+        add slot loop-number - 1 of event-inventory to {PresentList::%{_name}%::item::*}
+    send "%{PresentList::%{_name}%::item::*}%" to player
+
+on rightclick with ghast tear:
+    if custom model data of player's tool = 1:
+        set {_text} to "일반"
+    else if custom model data of player's tool = 3:
+        set {_text} to "고급"
+
+    loop {PresentList::%{_text}%::item::*}:
+        if loop-value is air:
+            delete {PresentList::%{_text}%::item::%loop-index%}
+        else:
+            add loop-value to {_inv::*}
+    set {_item} to random element of {PresentList::%{_text}%::item::*}
+
+    if {_item} is set:
+        set {_inventory} to chest inventory with 4 row named "&f"
+        loop {_inv::*}:
+            add 1 to {_slot}
+            set slot {_slot} - 1 of {_inventory} to loop-value
+
+        set slot 4+27 of {_inventory} to {_item}
+
+        open {_inventory} to player
+        send "&a아이템을 획득했습니다!" to player
+        play sound "entity.item.pickup" with volume 0.5 to player 
+        remove 1 of player's tool from player's tool
+
+        if player don't have enough space for {_item}:
+            sendMail(player,{_item})
+            send "&c[ ! ] &f인벤토리에 공간이 없어 우편함으로 선물을 받았습니다." to player
+        else:
+            give {_item} to player
+
+on inventory click:
+    if name of event-inventory contains "":
+        cancel event
+        close player's inventory

@@ -1,0 +1,245 @@
+on craft:
+    if event-slot is wooden hoe or stone hoe or iron hoe or golden hoe:
+        cancel event
+        set {_item} to event-slot
+        if "%click type%" contain "SHIFT":
+            cancel event
+            send "&c[ ! ] &f도구를 제작할 땐 Shift를 누를 수 없습니다."
+            stop
+        set line 1 of lore of {_item} to "&9채광 도구"
+        if event-slot is wooden hoe:
+            set line 2 of lore of {_item} to "&f아이템 레벨 1"
+        else if event-slot is stone hoe:
+            set line 2 of lore of {_item} to "&f아이템 레벨 3"
+        else if event-slot is iron hoe:
+            set line 2 of lore of {_item} to "&f아이템 레벨 5"
+        else if event-slot is golden hoe:
+            set line 2 of lore of {_item} to "&f아이템 레벨 8"
+        loop 9 times:
+            set item amount of slot loop-number of player's current inventory to item amount of slot loop-number of player's current inventory - 1
+        set event-slot to air
+        loop integers from 0 to 35:
+            slot loop-integer of inventory of player is air
+            add 1 to {_count}
+            {_count} >= 1
+            set {_result} to true
+        if {_result} is true:
+            give {_item} to player
+        else:
+            drop {_item} at player without velocity
+
+function damageitem(p: player):
+    if "%{_p}'s tool%" contains "gold":
+        chance of 4%:
+            set durability of {_p}'s tool to durability of {_p}'s tool - 1
+    else:
+        set durability of {_p}'s tool to durability of {_p}'s tool - 1
+    if durability of {_p}'s tool <= 0:
+        set item amount of {_p}'s tool to item amount of {_p}'s tool - 1
+        play sound "entity.item.break" with volume 1 and pitch 1 at location of {_p}
+
+on break:
+    if event-block is short grass or tall grass or long fern or fern:
+        set {_farmbreak} to true
+    else if event-block is wheat[age=7] or beetroots[age=3]:
+        set {_farmbreak} to true
+    else if event-block is carrots[age=7] or potatoes[age=7]:
+        set {_farmbreak} to true
+    else if "%event-block%" contains "dandelion" or "poppy" or "orchid" or "allium" or "azure" or "tulip" or "oxeye" or "cornflower" or "lily" or "petals" or "sunflower" or "lilac" or "rose" or "peony":
+        set {_farmbreak} to true
+    if event-block is grass block:
+        set {_farmbreak} to false
+
+    if {_farmbreak} = true:
+        cancel drops
+        set {_drop::*} to drops of event-block
+
+        if event-block is short grass or tall grass or long fern or fern:
+            delete {_drop::*}
+            if itemLv(player's tool) >= 1:
+                if "%player's tool%" contains "hoe":
+                    chance of 33%:
+                        damageitem(player)
+                    chance of operationAc(itemLv(player's tool),10,100)%:
+                        add 1 seed to {_drop::*}
+
+        else if "%event-block%" contains "dandelion" or "poppy" or "orchid" or "allium" or "azure" or "tulip" or "oxeye" or "cornflower" or "lily" or "petals" or "sunflower" or "lilac" or "rose" or "peony":
+            delete {_drop::*}
+            if itemLv(player's tool) >= 1:
+                if "%player's tool%" contains "hoe":
+                    chance of 33%:
+                        damageitem(player)
+                    chance of operationAc(itemLv(player's tool),10,100)%:
+                        set {_beet} to a random integer between 1 and 2
+                        loop {_beet} times:
+                            add 1 carrot with custom model data 1 named "&f당근 씨앗" to {_drop::*}
+
+        else if event-block is wheat[age=7] or beetroots[age=3]: 
+            getExp("farm",player)
+            loop {_drop::*}:
+                if "%loop-value%" contains "seed":
+                    delete {_drop::%loop-index%}
+
+            if "%player's tool%" contains "hoe":
+                chance of 33%:
+                    damageitem(player)
+                chance of operationAc(itemLv(player's tool),10,30)%:
+                    if event-block is wheat:
+                        add 1 seed to {_drop::*}
+                    else if event-block is beetroots:
+                        add 1 beetroot seed to {_drop::*}
+            
+        else if event-block is carrots[age=7] or potatoes[age=7]:
+            getExp("farm",player)
+            delete {_drop::*}
+            if "%event-block%" contains "carrot":
+                add 1 apple with custom model data 2001 named "&f당근" to {_drop::*} 
+            else if "%event-block%" contains "potato":
+                add 1 apple with custom model data 2002 named "&f감자" to {_drop::*}
+
+            if "%player's tool%" contains "hoe":
+                chance of 33%:
+                    damageitem(player)
+                chance of operationAc(itemLv(player's tool),10,30)%:
+                    if "%event-block%" contains "carrot":
+                        add 1 carrot with custom model data 1 named "&f당근 씨앗" to {_drop::*} 
+                    else if "%event-block%" contains "potato":
+                        add 1 potato with custom model data 1 named "&f감자 씨앗" to {_drop::*}
+
+    if event-block is wheat[age=7] or beetroots[age=3] or carrots[age=7] or potatoes[age=7]:
+        #추가 수확 : 농작물 추가 드랍
+        if storeAccessory(player,111) >= 1:
+            chance of operationAc(storeAccessory(player,111),30,70)%:
+                loop {_drop::*}:
+                    if "%loop-value%" contains "seed" or "potato" or "carrot":
+                        set {_aaa} to 1
+                    else:
+                        set {_count} to item amount of loop-value * ( 1 + operationAc(storeAccessory(player,111),1,1))
+                        set {_drop::%loop-index%} to {_count} of {_drop::%loop-index%}
+
+                show 50 happy villager with offset of 0.5, 0.5, 0.5 and speed 0.01 at event-block
+                play sound "entity.elder_guardian.curse" in ambient category with volume 0.3 and pitch 2 at event-block
+        
+        #풍성한 성장 : 다시 자라남
+        if storeAccessory(player,114) >= 1:
+            chance of operationAc(storeAccessory(player,114),10,40)%:
+                if event-block is wheat:
+                    set event-block to wheat
+                else if event-block is beetroot plant:
+                    set event-block to beetroot plant
+                else if event-block is carrot plant:
+                    set event-block to carrot plant
+                else if event-block is potato plant:
+                    set event-block to potato plant
+                show 100 electric spark with offset of 0.5, 0.5, 0.5 and speed 1 at event-block
+                play sound "entity.lightning_bolt.impact" in ambient category with volume 0.5 and pitch 2 at event-block
+                add event-block to {ac114::*}
+
+    if {_farmbreak} = true:
+        #씨앗 수확자 : 씨앗 추가 드랍
+        if storeAccessory(player,113) >= 1:
+            set {_particle} to false
+            loop {_drop::*}:
+                chance of operationAc(storeAccessory(player,113),30,70)%:
+                    if "%loop-value%" contains "seed" or "potato" or "carrot":
+                        set {_particle} to true
+                        set {_count} to item amount of loop-value * ( 1 + operationAc(storeAccessory(player,113),1,3))
+                        set {_drop::%loop-index%} to {_count} of {_drop::%loop-index%}
+            if {_particle} is true:
+                show 50 wax off with offset of 0.3, 0, 0.3 and speed 5 at event-block 
+                play sound "block.grindstone.use" in ambient category with volume 1 and pitch 2 at event-block 
+        drop {_drop::*} at event-block
+
+    if event-block is carrot plant or potato plant:
+        if event-block is not carrots[age=7] or potatoes[age=7]:
+            if "%player's tool%" contains "hoe":
+                cancel event
+            else:
+                cancel drops
+
+                if "%event-block%" contains "carrot":
+                    drop 1 carrot with custom model data 1 named "&f당근 씨앗" at event-block
+                else if "%event-block%" contains "potato":
+                    drop 1 potato with custom model data 1 named "&f감자 씨앗" at event-block
+
+    if event-block is wheat or beetroot plant:
+        if event-block is not wheat[age=7] or beetroots[age=3]:
+            if "%player's tool%" contains "hoe":
+                cancel event
+
+    loop {ac114::*}:
+        if loop-value is event-block:
+            set {_noseed} to true
+    if {_noseed} is not true:
+        if event-block is wheat[age=7]:
+            if "%player's tool%" contains "hoe":
+                if amount of seed in player's inventory >= 1:
+                    remove 1 of seed from player's inventory
+                    set event-block to wheat
+        if event-block is beetroots[age=3]:
+            if "%player's tool%" contains "hoe":
+                if amount of beetroot seed in player's inventory >= 1:
+                    remove 1 of beetroot seed from player's inventory
+                    set event-block to beetroot plant
+        if event-block is carrots[age=7]:
+            if "%player's tool%" contains "hoe":
+                if amount of carrot in player's inventory >= 1:
+                    remove 1 of carrot from player's inventory
+                    set event-block to carrot plant
+        if event-block is potatoes[age=7]:
+            if "%player's tool%" contains "hoe":
+                if amount of potato in player's inventory >= 1:
+                    remove 1 of potato from player's inventory
+                    set event-block to potato plant
+
+            
+
+
+
+on pick up:
+    if event-item is potato or carrot:
+        if custom model data of event-item is not 1:
+            cancel event
+            delete event-dropped item
+
+on consume:
+    if event-item is potato or carrot:
+        cancel event
+        send "&f앗! 씨앗은 먹으면 안돼..." to player
+    else if storeAccessory(player,131) >= 1:
+        add 2 to player's food level
+
+every 5 ticks:
+    loop all players:
+        #태양의 축복 : 주위 농작물 성장
+        if storeAccessory(loop-player,112) >= 1:
+            add 1 to {ac112::%uuid of loop-player%}
+            if the block at loop-player is farmland:
+                if {ac112::%uuid of loop-player%} >= operationAc(storeAccessory(loop-player,112),8,3):
+                    loop blocks in radius 10 around the loop-player:    
+                        if loop-block is wheat or beetroot plant or carrot plant or potato plant:
+                            if loop-block is not wheat[age=7] or beetroots[age=3] or carrots[age=7] or potatoes[age=7]:
+                                add loop-block to {_sun::*}
+                    
+                    if {_sun::*} is set:
+                        set {ac112::%uuid of loop-player%} to 0
+                        loop operationAc(storeAccessory(loop-player,112),3,12) times:
+                            set {_randomBlock} to random element of {_sun::*}
+                            set age of {_randomBlock} to age of {_randomBlock} + 1
+                            show 5 wax on with offset of 0.3, 0, 0.3 and speed 5 at {_randomBlock}
+                            play sound "entity.ender_eye.death" in ambient category with volume 1 and pitch 2 at {_randomBlock}
+
+every 2 ticks:
+    loop {ac114::*}:
+        if loop-value is wheat or beetroot plant or carrot plant or potato plant:
+            show 10 cloud with offset of 0.3, 0, 0.3 and speed 0.01 at loop-value ~ vector(0,3,0)
+            show 20 rain with offset of 0.3, 0, 0.3 and speed 5 at loop-value ~ vector(0,3,0)
+            play sound "weather.rain" in ambient category with volume 0.5 and pitch 2 at loop-value
+            chance of 20%:
+                set age of loop-value to age of loop-value + 1
+        else:
+            delete {ac114::%loop-index%}
+
+        if loop-value is wheat[age=7] or beetroots[age=3] or carrots[age=7] or potatoes[age=7]:
+            delete {ac114::%loop-index%}
+

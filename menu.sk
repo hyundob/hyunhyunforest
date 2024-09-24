@@ -1,0 +1,162 @@
+on swap hand items:
+	if player is sneaking:
+		cancel event
+		open chest with 3 rows named "&f" to player
+		if {exp::mine::%uuid of player%} is not set:
+			set {exp::mine::%uuid of player%} to 0
+			set {expMax::mine::%uuid of player%} to 7
+		if {exp::farm::%uuid of player%} is not set:
+			set {exp::farm::%uuid of player%} to 0
+			set {expMax::farm::%uuid of player%} to 7
+		if {exp::fish::%uuid of player%} is not set:
+			set {exp::fish::%uuid of player%} to 0
+			set {expMax::fish::%uuid of player%} to 7
+		if {exp::adv::%uuid of player%} is not set:
+			set {exp::adv::%uuid of player%} to 0
+			set {expMax::adv::%uuid of player%} to 7
+		loop 6 times:
+			set {_loop} to loop-value
+			if {_loop} >= 5:
+				add 14 to {_loop}
+			else if {_loop} >= 3:
+				add 7 to {_loop}
+			set slot {_loop} - 1 of current inventory of player to barrier with custom model data 1 named "&7채광 레벨" with lore "&f채광 스탯을 확인합니다." and "" and "&aLv. %{level::mine::%uuid of player%}% &7&o%{exp::mine::%uuid of player%}%/%{expMax::mine::%uuid of player%}%"
+		loop 6 times:
+			set {_loop} to loop-value
+			if {_loop} >= 5:
+				add 14 to {_loop}
+			else if {_loop} >= 3:
+				add 7 to {_loop}
+			set slot {_loop} + 1 of current inventory of player to barrier with custom model data 1 named "&6농사 레벨" with lore "&f농사 스탯을 확인합니다." and "" and "&aLv. %{level::farm::%uuid of player%}% &7&o%{exp::farm::%uuid of player%}%/%{expMax::farm::%uuid of player%}%"
+		loop 6 times:
+			set {_loop} to loop-value
+			if {_loop} >= 5:
+				add 14 to {_loop}
+			else if {_loop} >= 3:
+				add 7 to {_loop}
+			set slot {_loop} + 4 of current inventory of player to barrier with custom model data 1 named "&9낚시 레벨" with lore "&f낚시 스탯을 확인합니다." and "" and "&aLv. %{level::fish::%uuid of player%}% &7&o%{exp::fish::%uuid of player%}%/%{expMax::fish::%uuid of player%}%"
+		loop 6 times:
+			set {_loop} to loop-value
+			if {_loop} >= 5:
+				add 14 to {_loop}
+			else if {_loop} >= 3:
+				add 7 to {_loop}
+			set slot {_loop} + 6 of current inventory of player to barrier with custom model data 1 named "&a모험 레벨" with lore "&f모험 스탯을 확인합니다." and "" and "&aLv. %{level::adv::%uuid of player%}% &7&o%{exp::adv::%uuid of player%}%/%{expMax::adv::%uuid of player%}%"
+		set slot 4 + 9 of current inventory of player to skull of player named "&e기타 메뉴" with lore "&f기타 메뉴 옵션을 엽니다."
+
+command /운영자등록:
+	trigger:
+		if name of player is "Hyunu_":
+			set {operater} to player
+
+command /shoppos:
+	trigger:
+		if player is op:
+			set {shoppos} to player's location
+
+on inventory click:
+	if name of event-inventory contains "":
+		cancel event
+		if event-item is barrier:
+			set {_name} to uncolored name of event-item
+			replace all "레벨" and " " with "" in {_name}
+			statTable(player,{_name})
+		if event-item is skull:
+			set {_inv} to chest inventory with 1 rows named "&f"
+			if storeAccessory(player,139) >= 1:
+				set slot 1 of {_inv} to ghast tear with custom model data 139 named "&1가방 열기" with lore "&7&o휴대용 가방을 엽니다."
+			set slot 3 of {_inv} to emerald named "&c운영자 호출" with lore "&7&o운영자를 호출합니다."
+			set slot 5 of {_inv} to ghast tear with custom model data 17 named "&a무" with lore "&7&o무 메뉴를 엽니다."
+			if {houseLevel::%uuid of player%} >= 4:
+				set slot 6 of {_inv} to diamond named "&9상점으로" with lore "&7&o상점으로 갑니다."
+			set slot 7 of {_inv} to barrier named "&c쓰레기통" with lore "&7&o쓰레기통을 엽니다" and "" and "&c!!! 복구 불가 !!!"
+			open {_inv} to player
+	if name of event-inventory contains "":
+		cancel event
+		if name of event-item contains "운영자 호출":
+			set {_hyunurank} to 15 - storeAccessory(player,130)
+			send "&c[ ! ] &f%{name::%uuid of player%}% : 도와주세요! &7&o(우선순위 : %{_hyunurank}%)" to {operater}
+			play sound "entity.villager.celebrate" with volume 100 and pitch 1.0 at {operater} for {operater}
+		else if name of event-item contains "가방 열기":
+			set {_inv} to chest inventory with 3 row named "휴대용 가방"
+			loop {ac139::%uuid of player%::item::*}:
+				add 1 to {_slot}
+				if {_slot} > 3 * 9:
+					exit loop
+				set slot {_slot} - 1 of {_inv} to loop-value
+			open {_inv} to player
+		else if name of event-item contains "쓰레기통":
+			open chest inventory with 1 row named "쓰레기통" to player
+		else if name of event-item contains "상점으로":
+			teleport player to {shoppos}
+		else if name of event-item contains "무":
+			set {_inv} to chest inventory with 3 row named "무 메뉴"
+			if {radish::%uuid of player%::get} is not set:
+				set {radish::%uuid of player%::get} to 0
+			set {_turn} to 24 - ({serverRadishTime} - {radish::%uuid of player%::time})
+			set slot 4 of {_inv} to nether star named "&9무 관련 주의 사항" with lore "&7&o- 무는 1시간마다 가격이 변동됩니다." and "&7&o- 구매한 무는 가격이 24번이 바뀌면 썩습니다." and "&7&o- 무의 모든 시간 기준은 게임 내 시간 기준입니다."
+			if {radish::%uuid of player%::time} is set:
+				set slot 4 + 18 of {_inv} to ghast tear with custom model data 17 named "&a무 정보" with lore "&f보유 중인 무 &a%{radish::%uuid of player%::get}%" and "&f무가 썩기까지 &a%{_turn}%번"
+			else:
+				set slot 4 + 18 of {_inv} to ghast tear with custom model data 17 named "&a무 정보" with lore "&f보유 중인 무 &a%{radish::%uuid of player%::get}%"
+
+			if {radish::%uuid of player%::get} = 0:
+				set slot 2 + 18 of {_inv} to white dye with custom model data 3 named "&a무 구매" with lore "&f무 구매 가격 &a%{serverRadishPrice}%" and "&7&oShift + 클릭 시 10개 구매"
+			else if {radish::%uuid of player%::time} = {serverRadishTime}:
+				set slot 2 + 18 of {_inv} to white dye with custom model data 3 named "&a무 구매" with lore "&f무 구매 가격 &a%{serverRadishPrice}%" and "&7&oShift + 클릭 시 10개 구매"
+			if {radish::%uuid of player%::get} >= 1:
+				set slot 6 + 18 of {_inv} to white dye with custom model data 4 named "&c무 판매" with lore "&f무 판매 가격 &a%rounded {serverRadishPrice} * 0.95%" and "&7&o판매 수수료 5%{percent}%" and "&7&oShift + 클릭 시 전체 판매"
+			open {_inv} to player
+	if name of event-inventory contains "무 메뉴":
+		cancel event
+		if name of event-item contains "무 구매":
+			if {money::%uuid of player%} >= {serverRadishPrice}:
+				if "%click type%" contain "SHIFT":
+					set {_loop} to 10
+				else:
+					set {_loop} to 1
+				loop {_loop} times:
+					if {money::%uuid of player%} >= {serverRadishPrice}:
+						set {radish::%uuid of player%::time} to {serverRadishTime}
+						add 1 to {radish::%uuid of player%::get}
+						set {money::%uuid of player%} to {money::%uuid of player%} - {serverRadishPrice}
+						set {total::%uuid of player%} to {total::%uuid of player%} - {serverRadishPrice}
+						set {todaytotal::%uuid of player%} to {todaytotal::%uuid of player%} - {serverRadishPrice}
+					else:
+						exit loop
+				set {_turn} to 24 - ({serverRadishTime} - {radish::%uuid of player%::time})
+				set slot 6 + 18 of event-inventory to white dye with custom model data 4 named "&c무 판매" with lore "&f무 판매 가격 &a%rounded {serverRadishPrice} * 0.95%" and "&7&o판매 수수료 5%{percent}%" and "&7&oShift + 클릭 시 전체 판매"
+				set slot 4 + 18 of event-inventory to ghast tear with custom model data 17 named "&a무 정보" with lore "&f보유 중인 무 &a%{radish::%uuid of player%::get}%" and "&f무가 썩기까지 &a%{_turn}%번"
+				play sound "entity.experience_orb.pickup" with volume 1 and pitch 1.0 for player
+			else:
+				send "&c[ ! ] &f벨이 부족합니다!" to player
+				close player's inventory
+		if name of event-item contains "무 판매":
+			if {radish::%uuid of player%::get} >= 1:
+				if "%click type%" contain "SHIFT":
+					set {_loop} to {radish::%uuid of player%::get}
+				else:
+					set {_loop} to 1
+				add {_loop} * -1 to {radish::%uuid of player%::get}
+				if {radish::%uuid of player%::get} = 0:
+					delete {radish::%uuid of player%::time}
+					set slot 6 + 18 of event-inventory to air
+					set slot 2 + 18 of event-inventory to white dye with custom model data 3 named "&a무 구매" with lore "&f무 구매 가격 &a%{serverRadishPrice}%" and "&7&oShift + 클릭 시 10개 구매"
+
+				set {money::%uuid of player%} to {money::%uuid of player%} + rounded ({serverRadishPrice} * {_loop} * 0.95)
+				set {total::%uuid of player%} to {total::%uuid of player%} + rounded ({serverRadishPrice} * {_loop} * 0.95)
+				set {todaytotal::%uuid of player%} to {todaytotal::%uuid of player%} + rounded ({serverRadishPrice} * {_loop} * 0.95)
+				send "&a무를 판매했습니다!" to player
+				play sound "entity.experience_orb.pickup" with volume 1 and pitch 1.0 for player
+				if {radish::%uuid of player%::time} is set:
+					set {_turn} to 24 - ({serverRadishTime} - {radish::%uuid of player%::time})
+					set slot 4 + 18 of event-inventory to ghast tear with custom model data 17 named "&a무 정보" with lore "&f보유 중인 무 &a%{radish::%uuid of player%::get}%" and "&f무가 썩기까지 &a%{_turn}%번"
+				else:
+					set slot 4 + 18 of event-inventory to ghast tear with custom model data 17 named "&a무 정보" with lore "&f보유 중인 무 &a%{radish::%uuid of player%::get}%"
+
+on inventory close:
+	if event-inventory's display name contain "휴대용 가방":
+		delete {ac139::%uuid of player%::item::*}
+		loop 3 * 9 times:
+			add slot loop-number - 1 of event-inventory to {ac139::%uuid of player%::item::*}
+

@@ -1,0 +1,73 @@
+function addMoney(p: player, x: text, n: number):: integer:
+	set {_uuid} to uuid of {_p}
+
+	loop {fishmuseum::%{_uuid}%::*}:
+		if loop-value is true:
+			add 0.5 to {_moneybonus}
+
+	loop {fossilmuseum::%{_uuid}%::*}:
+		if loop-value is true:
+			add 0.5 to {_moneybonus}
+			
+	if storeAccessory({_p},136) >= 1:
+		if time of "world" is between 21:00 and 22:00:
+			add operationAc(storeAccessory({_p},136),10,70) to {_moneybonus}
+	
+	if {_x} = "일반":
+		set {_plus} to {_moneybonus}
+		set {_total} to true
+	else if {_x} = "채광":
+		set {_plus} to {statMine::%{_uuid}%} + {_moneybonus}
+		set {_total} to true
+	else if {_x} = "낚시":
+		set {_plus} to {statFish::%{_uuid}%} + {_moneybonus}
+		set {_total} to true
+	else if {_x} = "농사":
+		set {_plus} to {statFarm::%{_uuid}%} + {_moneybonus}
+		set {_total} to true
+	else if {_x} = "모험":
+		set {_plus} to {statAdv::%{_uuid}%} + {_moneybonus}
+		set {_total} to true
+	else:
+		set {_plus} to 0
+
+	if {_plus} is not set:
+		set {_plus} to 0
+
+	set {_addMoney} to rounded ( {_n} * ( 100 + {_plus} ) / 100 )
+	set {money::%{_uuid}%} to {money::%{_uuid}%} + {_addMoney}
+	if {_total} is true:
+		add {_addMoney} to {total::%{_uuid}%}
+		add {_addMoney} to {todaytotal::%{_uuid}%}
+	
+	return {_addMoney}
+
+command /돈 [<text>] [<player>] [<integer>]:
+	trigger:
+		if arg 1 is not set:
+			send "&a현재 보유 중인 벨 &f%{money::%uuid of player%}%" to player
+		else:
+			if player is op:
+				set {_uuid} to uuid of arg 2
+				if arg 1 is "주기":
+					set {_money} to addMoney(arg 2,"절대",arg 3)
+					send "&a성공적으로 돈을 보냈습니다! &7&o(보유 중인 벨 : &f&7&o%{money::%{_uuid}%}%)" to player
+					send "&a운영자에게 돈을 받았습니다! &f%{_money}%" to arg 2
+				else if arg 1 is "뺏기":
+					set {_money} to addMoney(arg 2,"절대",arg 3 * -1)
+					send "&a성공적으로 돈을 뺏었습니다! &7&o(보유 중인 벨 : &f&7&o%{money::%{_uuid}%}%)" to player
+					send "&c운영자에게 돈을 뺏겼습니다! &f&7&o(%{_money}%)" to arg 2
+				else if arg 1 is "설정":
+					set {money::%{_uuid}%} to arg 3
+					send "&a성공적으로 돈을 설정했습니다! &7&o(보유 중인 벨 : &f&7&o%{money::%{_uuid}%}%)" to player
+					send "&a운영자에게 돈이 설정되었습니다. &f%{money::%{_uuid}%}%" to arg 2
+				else if arg 1 is "보기":
+					send "&a현재 %arg 2%님이 보유 중인 벨 &f%{money::%{_uuid}%}%" to player
+
+command /나뭇잎 [<text>] [<player>] [<integer>]:
+	trigger:
+		if player is op:
+			if arg 1 is "주기":
+				add arg 3 to {leaf::%uuid of arg 2%}
+				send "%{leaf::%uuid of arg 2%}%" to player
+		

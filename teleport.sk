@@ -1,0 +1,198 @@
+on player move:
+    if world of player's location is "world":
+        set {_loc} to player's location
+
+        #마을 회관
+        if x-coord of {_loc} is between -17 and -22:
+            if y-coord of {_loc} is between 64 and 66:
+                if z-coord of {_loc} is between 142.0 and 143.0:
+                    set y-coord of {_loc} to y-coord of {_loc} - 100
+                    teleport player to {_loc}
+        if x-coord of {_loc} is between -17 and -22:
+            if y-coord of {_loc} is between -36 and -34:
+                if z-coord of {_loc} is between 143.0 and 144.0:
+                    set y-coord of {_loc} to y-coord of {_loc} + 100
+                    teleport player to {_loc}
+
+        #너굴 상점
+        if time of "world" is between 0:00 and 5:59:
+            set {_shop} to false
+        else if time of "world" is between 22:00 and 23:59:
+            set {_shop} to false
+        else:
+            set {_shop} to true
+
+        if x-coord of {_loc} is between 1 and 6:
+            if y-coord of {_loc} is between 67 and 68:
+                if z-coord of {_loc} is between 63.0 and 64.0:
+                    if {_shop} is true:
+                        set y-coord of {_loc} to y-coord of {_loc} - 100
+                        teleport player to {_loc}
+                    else:
+                        send action bar "&c[ ! ] &f늦은 밤이라 문을 닫았나봐..." to player
+        if x-coord of {_loc} is between 1 and 6:
+            if y-coord of {_loc} is between -34 and -32:
+                if z-coord of {_loc} is between 64.0 and 65.0:
+                    set y-coord of {_loc} to y-coord of {_loc} + 100
+                    teleport player to {_loc}
+
+        #박물관
+        if x-coord of {_loc} is between -162 and -160:
+            if y-coord of {_loc} is between 65 and 67:
+                if z-coord of {_loc} is between -52.0 and -53.0:
+                    set y-coord of {_loc} to y-coord of {_loc} - 100
+                    teleport player to {_loc}
+        if x-coord of {_loc} is between -162 and -160:
+            if y-coord of {_loc} is between -35 and -33:
+                if z-coord of {_loc} is between -51.0 and -52.0:
+                    set y-coord of {_loc} to y-coord of {_loc} + 100
+                    teleport player to {_loc}
+
+command /와우 [<text>]:
+    trigger:
+        if player is op:
+            set {rightclicksign.%uuid of player%} to arg 1
+
+on rightclick:
+    if event-block is player head:
+        cancel event
+        if {rightclicksign.%uuid of player%} is set:
+            set {%{rightclicksign.%uuid of player%}%::%event-block%} to true
+            delete {rightclicksign.%uuid of player%}
+        if {생활창구::%event-block%} is true:
+            set {_inv} to chest inventory with 3 rows named "생활창구"
+            
+            if {houseLevel::%uuid of player%} is not set:
+                set {houseLevel::%uuid of player%} to 1
+            
+            if {houseLevel::%uuid of player%} = 1:
+                set {_text} to "&f &c-50,000"
+            else if {houseLevel::%uuid of player%} = 2:
+                set {_text} to "&f &c-100,000"
+            else if {houseLevel::%uuid of player%} = 3:
+                set {_text} to "&f &c-400,000"
+            else if {houseLevel::%uuid of player%} = 4:
+                set {_text} to "&f &c-1,000,000"
+            else if {houseLevel::%uuid of player%} = 5:
+                set {_text} to "&f &c-2,500,000"
+
+            if {houseLevel::%uuid of player%} <= 5:
+                set slot 3 + 9 of {_inv} to book named "&a대출 갚기" with lore "&f대출을 갚습니다." and "" and "%{_text}%"
+            else:
+                set slot 3 + 9 of {_inv} to book named "&a대출 갚기" with lore "&f모든 대출을 다 갚았다!"
+            set slot 5 + 9 of {_inv} to book named "&a친구 성취도 확인하기" with lore "&f친구 성취도를 확인합니다."
+            open {_inv} to player
+        else if {우편창구::%event-block%} is true:
+            set {_inv} to chest inventory with 3 rows named "우편창구"
+
+            set slot 3 + 9 of {_inv} to book named "&a우편 상점 열기" with lore "&f우편 상점을 엽니다."
+            set slot 5 + 9 of {_inv} to book named "&a우편 보내기" with lore "&f우편을 보냅니다."
+
+            open {_inv} to player
+        else if {구매상점::%event-block%} is true:
+            execute player command "/구매상점 열기 너굴"
+        else if {판매상점::%event-block%} is true:
+            set {_inv} to chest inventory with 2 rows named "&f"
+            set slot 4 of {_inv} to nether star named "&9판매 상점" with lore "&f판매할 아이템을 클릭해주세요." and "" and "&7&o- Shift + 클릭 시 전체 판매"
+            open {_inv} to player
+        else if {박물관::%event-block%} is true:
+            set {_inv} to chest inventory with 3 rows named "박물관"
+
+            set slot 2 + 9 of {_inv} to book named "&5물고기 도감" with lore "&f물고기 도감을 엽니다."
+            set slot 4 + 9 of {_inv} to ghast tear with custom model data 12 named "&9화석 감정받기" with lore "&f화석을 감정받습니다."
+            set slot 6 + 9 of {_inv} to book named "&9화석 도감" with lore "&f화석 도감을 엽니다."
+            open {_inv} to player
+        else if {야생::%event-block%} is true:
+            set {_inv} to chest inventory with 3 rows named "야생"
+
+            set slot 2 + 9 of {_inv} to book named "&9야생 이용권" with lore "&f15분간 야생을 이용합니다."
+            set slot 6 + 9 of {_inv} to book named "&c지옥 이용권" with lore "&f15분간 지옥을 이용합니다."
+            open {_inv} to player
+        else if {도루묵::%event-block%} is true:
+            resetti(player)
+    if event-block is oak sign:
+        if {rightclicksign.%uuid of player%} is set:
+            set {%{rightclicksign.%uuid of player%}%::%event-block%} to true
+            delete {rightclicksign.%uuid of player%}
+        if {돌아가기::%event-block%} is true:
+            cancel event
+            teleport player to {setspawn}
+            delete {wildTime::%uuid of player%}
+    if event-block is diamond block:
+        if {rightclicksign.%uuid of player%} is set:
+            set {%{rightclicksign.%uuid of player%}%::%event-block%} to true
+            set {jedanLoc} to location of event-block
+            delete {rightclicksign.%uuid of player%}
+        if {jedan::%event-block%} is true:
+            cancel event
+            openjedan(player)
+
+command /야생위치지정:
+    trigger:
+        if player is op:
+            set {wildlocation} to player's location
+
+command /지옥위치지정:
+    trigger:
+        if player is op:
+            set {helllocation} to player's location
+
+
+on inventory click:
+    if name of event-inventory contains "":
+        cancel event
+    if name of event-inventory contains "야생":
+        cancel event
+        if name of event-item contains "야생 이용권":
+            teleport player to {wildlocation}
+            set {wildTime::%uuid of player%} to 15 * 60
+            if storeAccessory(player,129) >= 1:
+                set {ac129::speed::%uuid of player%} to operationAc(storeAccessory(player,129),0.024,0.8)
+                set {ac129::duration::%uuid of player%} to operationAc(storeAccessory(player,129),4,120)
+                set {ac129::start::%uuid of player%} to {accessorytime}
+        else if name of event-item contains "지옥 이용권":
+            if {hellper::%uuid of player%} is true:
+                teleport player to {helllocation}
+                set {wildTime::%uuid of player%} to 15 * 60
+                if storeAccessory(player,129) >= 1:
+                    set {ac129::speed::%uuid of player%} to operationAc(storeAccessory(player,129),0.024,0.8)
+                    set {ac129::duration::%uuid of player%} to operationAc(storeAccessory(player,129),4,120)
+                    set {ac129::start::%uuid of player%} to {accessorytime}
+            else:
+                if amount of obsidian in player's inventory >= 10:
+                    set {hellper::%uuid of player%} to true
+                    send "&a지옥 권한을 획득했습니다" to player
+                    close player's inventory
+                else:
+                    send "&c[ ! ] &f흑요석 10개가 필요합니다." to player
+
+on player move:
+    set {_loc} to location of player
+    if world of {_loc} is "world":
+        delete {wildTime::%uuid of player%}
+
+every 1 seconds:
+    loop all players:
+        if {wildTime::%uuid of loop-player%} >= 1:
+            set {wildTime::%uuid of loop-player%} to {wildTime::%uuid of loop-player%} - 1
+            if {wildTime::%uuid of loop-player%} = 5 * 60:
+                send "&c[ ! ] &f이용권 잔여 시간이 5분 남았습니다." to loop-player
+            else if {wildTime::%uuid of loop-player%} = 1 * 60:
+                send "&c[ ! ] &f이용권 잔여 시간이 1분 남았습니다." to loop-player
+            else if {wildTime::%uuid of loop-player%} = 6:
+                send "&c[ ! ] &f이용권 잔여 시간이 5초 남았습니다." to loop-player
+            else if {wildTime::%uuid of loop-player%} = 5:
+                send "&c[ ! ] &f이용권 잔여 시간이 4초 남았습니다." to loop-player
+            else if {wildTime::%uuid of loop-player%} = 4:
+                send "&c[ ! ] &f이용권 잔여 시간이 3초 남았습니다." to loop-player
+            else if {wildTime::%uuid of loop-player%} = 3:
+                send "&c[ ! ] &f이용권 잔여 시간이 2초 남았습니다." to loop-player
+            else if {wildTime::%uuid of loop-player%} = 2:
+                send "&c[ ! ] &f이용권 잔여 시간이 1초 남았습니다." to loop-player
+            else if {wildTime::%uuid of loop-player%} = 1:
+                teleport loop-player to {setspawn}
+                delete {wildTime::%uuid of loop-player%}
+
+on death:
+    if victim is player:
+        delete {wildTime::%uuid of victim%}

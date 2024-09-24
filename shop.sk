@@ -1,0 +1,370 @@
+command /구매상점 [<text>] [<text>] [<integer>] [<text>]:
+    trigger:
+        if arg 1 is "열기":
+            set {_inv} to chest inventory with 6 rows named "구매상점 %arg 2%"
+            loop {shop.list::%arg 2%::item::*}:
+                add 1 to {_slot}
+                if {_slot} > 6 * 9:
+                    exit loop
+                delete {_sell}
+                delete {_buy}
+                delete {_lore::*}
+                if {shop.list::%arg 2%::buy::bell::%loop-index%} >= 1:
+                    set {_buy} to {shop.list::%arg 2%::buy::bell::%loop-index%}
+                    set {_text} to ""
+
+                else if {shop.list::%arg 2%::buy::leaf::%loop-index%} >= 1:
+                    set {_buy} to {shop.list::%arg 2%::buy::leaf::%loop-index%}
+                    set {_text} to ""
+
+                set {_lore::*} to loop-value' lore
+
+                if {_buy} is set:
+                    add "&e구매 시 &f%{_text}% %{_buy}%" to {_lore::*}
+                    add "" to {_lore::*}
+                    add "&a클릭&f 1개 구매" to {_lore::*}
+                    add "&aShift + 클릭&f 10개 구매" to {_lore::*}
+                
+                set {_item} to loop-value
+                set {_item}'s lore to {_lore::*}
+                set slot {_slot} - 1 of {_inv} to {_item}
+                
+            open {_inv} to player
+        else if arg 1 is "설정":
+            set {_inv} to chest inventory with 6 row named "상점구매목록 %arg 2%"
+            loop {shop.list::%arg 2%::item::*}:
+                add 1 to {_slot}
+                if {_slot} > 6 * 9:
+                    exit loop
+                set slot {_slot} - 1 of {_inv} to loop-value
+            open {_inv} to player
+        else if arg 1 is "가격":
+            set {_arg3} to arg 3
+            if {_arg3} is not set:
+                send "{@p} 가격은 정수로 입력해 주세요."
+                exit
+            if arg 4 is "나뭇잎":
+                set {_hwapae} to "leaf"
+            else:
+                set {_hwapae} to "bell"
+            set {_shopName} to arg 2
+            set {shop.tmp.%uuid of player%::buy} to {_arg3}
+            set {shop.tmp.%uuid of player%::hwapae} to {_hwapae}
+            set {_inv} to chest inventory with 6 row named "상점구매가격 %{_shopName}%"
+            loop {shop.list::%arg 2%::item::*}:
+                add 1 to {_slot}
+                if {_slot} > 6 * 9:
+                    exit loop
+                delete {_lore::*}
+                set {_itemI} to loop-value
+                add "&e구매가격 &f%{shop.list::%{_shopName}%::sell::%{_hwapae}%::%loop-index-1%}%" to {_lore::*}
+                set {_itemI}'s lore to {_lore::*}
+                set slot {_slot} - 1 of {_inv} to {_itemI}
+            open {_inv} to player
+
+command /판매상점 [<text>] [<text>] [<integer>]:
+    trigger:
+        if arg 1 is "열기":
+            open chest with 2 rows named "&f" to player
+        else if arg 1 is "설정":
+            if arg 2 is "채광":
+                set {_shopName} to "Mine"
+            else if arg 2 is "농사":
+                set {_shopName} to "Farm"
+            else if arg 2 is "낚시":
+                set {_shopName} to "Fish"
+            else if arg 2 is "모험":
+                set {_shopName} to "Adv"
+            else if arg 2 is "일반":
+                set {_shopName} to "Def"
+
+            set {_inv} to chest inventory with 6 row named "상점판매목록 %{_shopName}%"
+            loop {SellShop::%{_shopName}%::item::*}:
+                add 1 to {_slot}
+                if {_slot} > 6 * 9:
+                    exit loop
+                set slot {_slot} - 1 of {_inv} to loop-value
+            open {_inv} to player
+        else if arg 1 is "가격":
+            if arg 2 is "채광":
+                set {_shopName} to "Mine"
+            else if arg 2 is "농사":
+                set {_shopName} to "Farm"
+            else if arg 2 is "낚시":
+                set {_shopName} to "Fish"
+            else if arg 2 is "모험":
+                set {_shopName} to "Adv"
+            else if arg 2 is "일반":
+                set {_shopName} to "Def"
+            set {_arg3} to arg 3
+            if {_arg3} is not set:
+                send "{@p} 가격은 정수로 입력해 주세요."
+                exit
+            set {shop.tmp.%uuid of player%::sell} to {_arg3}
+            set {_inv} to chest inventory with 6 row named "상점판매가격 %{_shopName}%"
+            loop {SellShop::%{_shopName}%::item::*}:
+                add 1 to {_slot}
+                if {_slot} > 6 * 9:
+                    exit loop
+                delete {_lore::*}
+                set {_itemI} to loop-value
+                add "&e판매가격 &f%{SellShop::%{_shopName}%::sell::%loop-index-1%}%" to {_lore::*}
+                set {_itemI}'s lore to {_lore::*}
+                set slot {_slot} - 1 of {_inv} to {_itemI}
+            open {_inv} to player
+
+on inventory close:
+    event-inventory's display name contain "상점판매목록"
+    set {_name} to event-inventory's display name
+    replace "상점판매목록" and " " with "" in {_name}
+    delete {SellShop::%{_name}%::item::*}
+    loop 6 * 9 times:
+        add slot loop-number - 1 of event-inventory to {SellShop::%{_name}%::item::*}
+    send "&e%{_name}%"
+
+on inventory close:
+    event-inventory's display name contain "상점구매목록"
+    set {_name} to event-inventory's display name
+    replace "상점구매목록" and " " with "" in {_name}
+    delete {shop.list::%{_name}%::item::*}
+    loop 6 * 9 times:
+        add slot loop-number - 1 of event-inventory to {shop.list::%{_name}%::item::*}
+    send "&e%{_name}%"
+
+on inventory click:
+    event-inventory's display name contain "상점판매가격"
+    cancel event
+    clicked inventory is player' current inventory
+    event-slot is not air
+    set {_name} to event-inventory's display name
+    replace "상점판매가격" and " " with "" in {_name}
+    if event-inventory's display name contain "상점판매가격":
+        if {shop.tmp.%uuid of player%::sell} is 0:
+            delete {SellShop::%{_name}%::sell::%index of clicked slot + 1%}
+            send "&e%{_name}% &f상점의 &e%index of clicked slot + 1% &f슬롯의 판매가격을 삭제했습니다."
+        else:
+            set {SellShop::%{_name}%::sell::%index of clicked slot + 1%} to {shop.tmp.%uuid of player%::sell}
+            send "&e%{_name}% &f상점의 &e%index of clicked slot + 1% &f슬롯의 판매가격을 &e%{shop.tmp.%uuid of player%::sell}% &f원으로 설정했습니다."
+
+on inventory click:
+    event-inventory's display name contain "상점구매가격"
+    cancel event
+    clicked inventory is player' current inventory
+    event-slot is not air
+    set {_name} to event-inventory's display name
+    replace "상점구매가격" and " " with "" in {_name}
+    if event-inventory's display name contain "상점구매가격":
+        if {shop.tmp.%uuid of player%::buy} is 0:
+            delete {shop.list::%{_name}%::buy::%{shop.tmp.%uuid of player%::hwapae}%::%index of clicked slot + 1%}
+            send "&e%{_name}% &f상점의 &e%index of clicked slot + 1% &f슬롯의 구매가격을 삭제했습니다."
+        else:
+            set {shop.list::%{_name}%::buy::%{shop.tmp.%uuid of player%::hwapae}%::%index of clicked slot + 1%} to {shop.tmp.%uuid of player%::buy}
+            send "&e%{_name}% &f상점의 &e%index of clicked slot + 1% &f슬롯의 구매가격을 &e%{shop.tmp.%uuid of player%::buy}% &f원으로 설정했습니다."
+
+on inventory click:
+    name of player' current inventory contains "구매상점"
+    cancel event
+    clicked inventory is player' current inventory
+    event-slot is not air
+    set {_name} to name of clicked inventory
+    replace "구매상점 " with "" in {_name}
+
+    if {shop.list::%{_name}%::buy::bell::%index of clicked slot + 1%} is not set:
+        add 1 to {_dummy}
+    if {shop.list::%{_name}%::buy::leaf::%index of clicked slot + 1%} is not set:
+        add 1 to {_dummy}
+        if {_dummy} >= 2:
+            exit
+    if {shop.list::%{_name}%::buy::bell::%index of clicked slot + 1%} >= 1:
+        set {_hwapae} to "bell"
+    else if {shop.list::%{_name}%::buy::leaf::%index of clicked slot + 1%} >= 1:
+        set {_hwapae} to "leaf"
+    set {_buy} to {shop.list::%{_name}%::buy::%{_hwapae}%::%index of clicked slot + 1%}
+    set {_item} to {shop.list::%{_name}%::item::%index of clicked slot + 1%}
+    if "%click type%" contain "SHIFT":
+        set {_amount} to item amount of {_item}
+        set {_buy} to {_buy} * 10
+        set item amount of {_item} to {_amount} * 10
+    if {_hwapae} is "bell":
+        if {money::%uuid of player%} < {_buy}:
+            set {_lack} to true
+    else if {_hwapae} is "leaf":
+        if {leaf::%uuid of player%} < {_buy}:
+            set {_lack} to true
+    if {_lack} is true:
+        send "&c[ ! ] &f재화가 부족합니다!"
+        play sound "entity.villager.no" with volume 0.5 for player
+        exit
+    if player don't have enough space for {_item}:
+        send "&c[ ! ] &f인벤토리에 공간이 부족합니다!"
+        play sound "entity.villager.no" with volume 0.5 for player
+        exit
+    else:
+        if {_hwapae} is "bell":
+            subtract {_buy} from {money::%uuid of player%}
+        else if {_hwapae} is "leaf":
+            subtract {_buy} from {leaf::%uuid of player%}
+    if name of event-item contains "무작위 액세서리":
+        if "%click type%" contain "SHIFT":
+            set {_time} to 10
+        else:
+            set {_time} to 1
+        loop {_time} times:
+            set {_item} to giveRandomAc()
+            if player don't have enough space for {_item}:
+                set {_space} to true
+                sendMail(player,{_item})
+            else:
+                give {_item} to player
+        if {_space} is true:
+            send "&c[ ! ] &f인벤토리가 부족하여 아이템을 우편함으로 보냈습니다!" to player
+    else if name of event-item contains "무작위 레시피":
+        if "%click type%" contain "SHIFT":
+            set {_time} to 10
+        else:
+            set {_time} to 1
+        loop {_time} times:
+            set {_item} to giveRandomRc()
+            if player don't have enough space for {_item}:
+                set {_space} to true
+                sendMail(player,{_item})
+            else:
+                give {_item} to player
+        if {_space} is true:
+            send "&c[ ! ] &f인벤토리가 부족하여 아이템을 우편함으로 보냈습니다!" to player
+    else:
+        give {_item} to player
+    send "&a아이템을 성공적으로 구매했습니다!"
+    play sound "entity.experience_orb.pickup" with volume 0.5 for player
+    exit
+
+on inventory click:
+    if player's inventory name contains "":
+        cancel event
+        set {_item} to event-item
+
+        if line 1 of lore of {_item} contains "물고기":
+            set {_num} to 0
+            loop {FishingList::River::item::*}:
+                add 1 to {_num}
+                if loop-value's name is {_item}'s name:
+                    set {_sell} to {FishingList::River::sell::%{_num}%}
+            set {_num} to 0
+            loop {FishingList::Sea::item::*}:
+                add 1 to {_num}
+                if loop-value's name is {_item}'s name:
+                    set {_sell} to {FishingList::Sea::sell::%{_num}%}
+
+            set {_fresh} to uncolored line 2 of lore of {_item}
+            replace all "신선도" and " " with "" in {_fresh}
+            set {_fresh} to {_fresh} parsed as integer
+
+            if "%click type%" contain "SHIFT":
+                set {_amount} to item amount of {_item}
+                set event-slot to air   
+            else:
+                set {_amount} to 1
+                set item amount of event-slot to item amount of event-slot - 1
+            set {_addMoney} to rounded ( {_sell} * {_fresh} / 100 * {_amount} )
+            play sound "entity.experience_orb.pickup" with volume 0.5 for player
+            send "&a아이템을 팔았다! &f%addMoney(player,"낚시",{_addMoney})%" to player
+            if {maxfish::%uuid of player%} is not set:
+                set {maxfish::%uuid of player%} to {_addMoney} / {_amount}
+                send "&b본인 자체 최고 기록 갱신! &f%{maxfish::%uuid of player%}%"
+            else if {maxfish::%uuid of player%} <= {_addMoney} / {_amount}:
+                set {maxfish::%uuid of player%} to {_addMoney} / {_amount}
+                send "&b본인 자체 최고 기록 갱신! &f%{maxfish::%uuid of player%}%"
+            stop
+
+        if line 1 of lore of {_item} contains "화석":
+            set {_num} to 0
+            loop {FossilList::1::item::*}:
+                add 1 to {_num}
+                if loop-value's name is {_item}'s name:
+                    set {_sell} to {FossilList::1::sell::%{_num}%}
+            set {_num} to 0
+            loop {FossilList::2::item::*}:
+                add 1 to {_num}
+                if loop-value's name is {_item}'s name:
+                    set {_sell} to {FossilList::2::sell::%{_num}%}
+
+            if "%click type%" contain "SHIFT":
+                set {_amount} to item amount of {_item}
+                set event-slot to air   
+            else:
+                set {_amount} to 1
+                set item amount of event-slot to item amount of event-slot - 1
+            set {_addMoney} to {_sell} * {_amount}
+            play sound "entity.experience_orb.pickup" with volume 0.5 for player
+            send "&a아이템을 팔았다! &f%addMoney(player,"모험",{_addMoney})%" to player
+            stop
+
+        loop {SellShop::Farm::item::*}:
+            if loop-value = 1 of event-item:
+                set {_sell} to {SellShop::Farm::sell::%loop-index%}
+                if "%click type%" contain "SHIFT":
+                    set {_amount} to item amount of {_item}
+                    set event-slot to air
+                else:
+                    set {_amount} to 1
+                    set item amount of event-slot to item amount of event-slot - 1
+                set {_addMoney} to {_sell} * {_amount}
+                play sound "entity.experience_orb.pickup" with volume 0.5 for player
+                send "&a아이템을 팔았다! &f%addMoney(player,"농사",{_addMoney})%" to player
+                stop
+        loop {SellShop::Mine::item::*}:
+            if loop-value = 1 of event-item:
+                set {_sell} to {SellShop::Mine::sell::%loop-index%}
+                if "%click type%" contain "SHIFT":
+                    set {_amount} to item amount of {_item}
+                    set event-slot to air
+                else:
+                    set {_amount} to 1
+                    set item amount of event-slot to item amount of event-slot - 1
+                set {_addMoney} to {_sell} * {_amount}
+                play sound "entity.experience_orb.pickup" with volume 0.5 for player
+                send "&a아이템을 팔았다! &f%addMoney(player,"채광",{_addMoney})%" to player
+                stop
+        loop {SellShop::Fish::item::*}:
+            if loop-value = 1 of event-item:
+                set {_sell} to {SellShop::Fish::sell::%loop-index%}
+                if "%click type%" contain "SHIFT":
+                    set {_amount} to item amount of {_item}
+                    set event-slot to air
+                else:
+                    set {_amount} to 1
+                    set item amount of event-slot to item amount of event-slot - 1
+                set {_addMoney} to {_sell} * {_amount}
+                play sound "entity.experience_orb.pickup" with volume 0.5 for player
+                send "&a아이템을 팔았다! &f%addMoney(player,"낚시",{_addMoney})%" to player
+                stop
+        loop {SellShop::Adv::item::*}:
+            if loop-value = 1 of event-item:
+                set {_sell} to {SellShop::Adv::sell::%loop-index%}
+                if "%click type%" contain "SHIFT":
+                    set {_amount} to item amount of {_item}
+                    set event-slot to air
+                else:
+                    set {_amount} to 1
+                    set item amount of event-slot to item amount of event-slot - 1
+                set {_addMoney} to {_sell} * {_amount}
+                play sound "entity.experience_orb.pickup" with volume 0.5 for player
+                send "&a아이템을 팔았다! &f%addMoney(player,"모험",{_addMoney})%" to player
+                stop
+        loop {SellShop::Def::item::*}:
+            if loop-value = 1 of event-item:
+                set {_sell} to {SellShop::Def::sell::%loop-index%}
+                if "%click type%" contain "SHIFT":
+                    set {_amount} to item amount of {_item}
+                    set event-slot to air
+                else:
+                    set {_amount} to 1
+                    set item amount of event-slot to item amount of event-slot - 1
+                set {_addMoney} to {_sell} * {_amount}
+                play sound "entity.experience_orb.pickup" with volume 0.5 for player
+                send "&a아이템을 팔았다! &f%addMoney(player,"",{_addMoney})%" to player
+                stop
+                    
+
+
+            

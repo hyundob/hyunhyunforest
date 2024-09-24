@@ -1,0 +1,100 @@
+function openjedan(p: player):
+    if {isJedanOpen} is true:
+        send "&c[ ! ] &f다른 플레이어가 운명의 천칭을 이용 중입니다." to {_p}
+    else:
+        set {_inv} to chest inventory with 1 rows named "운명의 천칭"
+        set slot 4 of {_inv} to nether star named "&9운명의 천칭" with lore "&f바칠 제물을 인벤토리에서 더블 클릭하세요..." and "&7&o아이템 갯수를 0~2배로 불립니다." and "" and "&c영구적으로 체력이 반 칸 줄어듭니다."
+        open {_inv} to {_p}
+        set {isJedanOpen} to true
+
+on inventory close:
+    if name of event-inventory contains "운명의 천칭":
+        if {isJedanUse} is not set:
+            set {isJedanOpen} to false
+
+on inventory click:
+    if name of event-inventory contains "운명의 천칭":
+        cancel event
+        if clicked inventory is not player' current inventory:
+            if "%click type%" contains "DOUBLE":
+                if the maximum health of player > 0.5:
+                    set {isJedanUse} to true
+                    add 0.5 to {minusHP::%uuid of player%}
+                    #거대 말파이트 : 체력
+                    if storeAccessory(player,106) >= 1:
+                        set {_malPlus} to rounded operationAc(storeAccessory(player,106),10,100)
+
+                    #유리대포 : 체력 감소, 피해량 증가
+                    if storeAccessory(player,107) >= 1:
+                        set {_glassHP} to -5
+
+                    set the maximum health of the player to 10 + {_malPlus} + {_glassHP} - {minusHP::%uuid of player%}
+                    send "&4의식을 시작합니다." to player
+                    play sound "entity.wither.spawn" in ambient category with volume 1 and pitch 1 at player
+                    set {serverJedanSize} to 0.5
+                    set {jedanItem} to event-item
+                    set {_loc} to {jedanLoc}
+                    set y-coord of {_loc} to 77
+                    set {_n} to nbt compound from "{billboard:center,brightness:{sky:15,block:15},transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[0.5f,0.5f,0.5f]},item:{id:'minecraft:ender_eye',Count:1b}}"
+                    spawn item display at {_loc} with nbt {_n}
+                    set event-slot to air
+                    close player's inventory
+                    loop all players in radius 10 around player:
+                        set {jedanuse::%uuid of loop-player%} to true
+                        send "&4웅크리기를 연타해 당신의 신의를 보이세요." to loop-player
+
+                else:
+                    send "&c[ ! ] &f제물로 바칠 체력이 없습니다." to player 
+
+on sneak toggle:
+    if {isJedanUse} is true:
+        if {jedanuse::%uuid of player%} is true:
+            if {serverJedanDone} is not set:
+                set {_loc} to {jedanLoc}
+                set y-coord of {_loc} to 77
+                add 0.1 to {serverJedanSize}
+                loop all item displays in radius 5 of {_loc}:
+                    kill loop-entity
+                set {_n} to nbt compound from "{billboard:center,brightness:{sky:15,block:15},transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[0f,0f,0f,1f],translation:[0f,0f,0f],scale:[%{serverJedanSize}%f,%{serverJedanSize}%f,%{serverJedanSize}%f]},item:{id:'minecraft:ender_eye',Count:1b}}"
+                spawn item display at {_loc} with nbt {_n}
+                play sound "entity.ender_eye.death" in ambient category with volume 1 and pitch 1 at player
+                show 20 soul with offset of 0.5, 0.5, 0.5 and speed 0.1 at location of player
+                show 100 portal with offset of 0.5, 0.5, 0.5 and speed 10 at {_loc}
+                if {serverJedanSize} = 10:
+                    set {serverJedanDone} to true
+                    loop all item displays in radius 5 of {_loc}:
+                        kill loop-entity
+                        show 100 explosion with offset of 1, 1, 1 and speed 1 at {_loc}
+                        play sound "entity.generic.explode" in ambient category with volume 5 and pitch 1 at {_loc}
+                        set {_item} to 1 of {jedanItem}
+                        set {_loop} to a random integer between 0 to item amount of {jedanItem} * 2
+                        loop {_loop} times:
+                            set {_loc} to {jedanLoc}
+                            set y-coord of {_loc} to 77
+                            set z-coord of {_loc} to a random number between z-coord of {_loc} -5 and z-coord of {_loc} +5
+                            set x-coord of {_loc} to a random number between x-coord of {_loc} -5 and x-coord of {_loc} +5
+                            drop {_item} at {_loc}
+                            play sound "entity.enderman.teleport" in ambient category with volume 5 and pitch 1 at {_loc}
+                            show 10 lava pop with offset of 0, 0, 0 and speed 1 at {_loc}
+                            loop all dropped items in radius 3 of {_loc}:
+                                apply glowing potion of tier 1 without any particles whilst hiding the potion icon to the loop-entity-2 # Hide potions
+                            wait 1 ticks
+                        delete {serverJedanDone}
+                        delete {isJedanSize}
+                        delete {jedanuse::*}
+                        delete {isJedanUse}
+                        set {isJedanOpen} to false
+
+command /jedanreset [<text>] [<player>] [<integer>]:
+    trigger:
+        if player is op:
+            if arg 1 is "reset":
+                delete {isJedanUse}
+                delete {jedanuse::*}
+                delete {isJedanSize}
+                delete {serverJedanDone}
+                set {isJedanOpen} to false
+            if arg 1 is "player":
+                set {minusHP::%uuid of arg 2%} to arg 3
+
+    

@@ -1,0 +1,283 @@
+function friendProcess(p: player):
+    set {_uuid} to uuid of {_p}
+    set {_inv} to chest inventory with 3 rows named "친구 성취도"
+    
+    loop 7 times:
+        if {friendprocess::%{_uuid}%::process::%loop-value%} = true:
+            if loop-value = 1:
+                add 1 enchanted book named "&d1단계 : 지인 만들기 I" with lore "&9완료함" and "&7&o지인 1명 사귀기" and "&e보상 | 나뭇잎 1개, 선물 2개, 우정 점수 10점" to {_friendProcess::*}
+            else if loop-value = 2:
+                add 1 enchanted book named "&d2단계 : 지인 만들기 II" with lore "&9완료함" and "&7&o지인 3명 사귀기" and "&e보상 | 나뭇잎 1개, 선물 2개, 우정 점수 10점" to {_friendProcess::*}
+            else if loop-value = 3:
+                add 1 enchanted book named "&d3단계 : 호감 쌓기 I" with lore "&9완료함" and "&7&o모두와의 호감도 총합 500점 넘기기" and "&e보상 | 나뭇잎 1개, 선물 2개, 우정 점수 10점" to {_friendProcess::*}
+            else if loop-value = 4:
+                add 1 enchanted book named "&d4단계 : 친구 만들기" with lore "&9완료함" and "&7&o친구 3명 사귀기" and "&e보상 | 나뭇잎 1개, 선물 2개, 우정 점수 10점" to {_friendProcess::*}
+            else if loop-value = 5:
+                add 1 enchanted book named "&d5단계 : 절친 만들기" with lore "&9완료함" and "&7&o절친 3명 사귀기" and "&e보상 | 나뭇잎 1개, 선물 2개, 우정 점수 10점" to {_friendProcess::*}
+            else if loop-value = 6:
+                add 1 enchanted book named "&d6단계 : 호감 쌓기 II" with lore "&9완료함" and "&7&o모두와의 호감도 총합 6,000점 넘기기" and "&e보상 | 나뭇잎 1개, 선물 2개, 우정 점수 10점" to {_friendProcess::*}
+            else if loop-value = 7:
+                add 1 enchanted book named "&d7단계 : 최고의 친구" with lore "&9완료함" and "&7&o혀누급 친구 1명 사귀기" and "&e보상 | 나뭇잎 1개, 선물 2개, 우정 점수 10점" to {_friendProcess::*}
+
+        else if {friendprocess::%{_uuid}%::process::%loop-value%} is not set:
+            if loop-value = 1:
+                add 1 enchanted book named "&d1단계 : 지인 만들기 I" with lore "&c미완료함" and "&7&o지인 1명 사귀기" and "&e보상 | 나뭇잎 1개, 선물 2개, 우정 점수 10점" to {_friendProcess::*}
+            else if loop-value = 2:
+                add 1 enchanted book named "&d2단계 : 지인 만들기 II" with lore "&c미완료함" and "&7&o지인 3명 사귀기" and "&e보상 | 나뭇잎 1개, 선물 2개, 우정 점수 10점" to {_friendProcess::*}
+            else if loop-value = 3:
+                add 1 enchanted book named "&d3단계 : 호감 쌓기 I" with lore "&c미완료함" and "&7&o모두와의 호감도 총합 500점 넘기기" and "&e보상 | 나뭇잎 1개, 선물 2개, 우정 점수 10점" to {_friendProcess::*}
+            else if loop-value = 4:
+                add 1 enchanted book named "&d4단계 : 친구 만들기" with lore "&c미완료함" and "&7&o친구 3명 사귀기" and "&e보상 | 나뭇잎 1개, 선물 2개, 우정 점수 10점" to {_friendProcess::*}
+            else if loop-value = 5:
+                add 1 enchanted book named "&d5단계 : 절친 만들기" with lore "&c미완료함" and "&7&o절친 3명 사귀기" and "&e보상 | 나뭇잎 1개, 선물 2개, 우정 점수 10점" to {_friendProcess::*}
+            else if loop-value = 6:
+                add 1 enchanted book named "&d6단계 : 호감 쌓기 II" with lore "&c미완료함" and "&7&o모두와의 호감도 총합 6,000점 넘기기" and "&e보상 | 나뭇잎 1개, 선물 2개, 우정 점수 10점" to {_friendProcess::*}
+            else if loop-value = 7:
+                add 1 enchanted book named "&d7단계 : 최고의 친구" with lore "&c미완료함" and "&7&o혀누급 친구 1명 사귀기" and "&e보상 | 나뭇잎 1개, 선물 2개, 우정 점수 10점" to {_friendProcess::*}
+
+    loop {_friendProcess::*}:
+        add 1 to {_num}
+
+        set slot {_num} + 9 of {_inv} to loop-value
+    open {_inv} to {_p}
+
+command /마을회관우편창구열기 [<text>]:
+    trigger:
+        if arg-1 is "1050":
+            set {_inv} to chest inventory with 3 rows named "우편창구"
+
+            set slot 3 + 9 of {_inv} to book named "&a우편 상점 열기" with lore "&f우편 상점을 엽니다."
+            set slot 5 + 9 of {_inv} to book named "&a우편 보내기" with lore "&f우편을 보냅니다."
+
+            open {_inv} to player
+
+command /마을회관생활창구열기 [<text>]:
+    trigger:
+        if arg-1 is "1050":
+            set {_inv} to chest inventory with 3 rows named "생활창구"
+            
+            if {houseLevel::%uuid of player%} is not set:
+                set {houseLevel::%uuid of player%} to 1
+            
+            if {houseLevel::%uuid of player%} = 1:
+                set {_text} to "&f &c-50,000"
+            else if {houseLevel::%uuid of player%} = 2:
+                set {_text} to "&f &c-100,000"
+            else if {houseLevel::%uuid of player%} = 3:
+                set {_text} to "&f &c-400,000"
+            else if {houseLevel::%uuid of player%} = 4:
+                set {_text} to "&f &c-1,000,000"
+            else if {houseLevel::%uuid of player%} = 5:
+                set {_text} to "&f &c-2,500,000"
+
+            if {houseLevel::%uuid of player%} <= 5:
+                set slot 3 + 9 of {_inv} to book named "&a대출 갚기" with lore "&f대출을 갚습니다." and "" and "%{_text}%"
+            else:
+                set slot 3 + 9 of {_inv} to book named "&a대출 갚기" with lore "&f모든 대출을 다 갚았다!"
+            set slot 5 + 9 of {_inv} to book named "&a친구 성취도 확인하기" with lore "&f친구 성취도를 확인합니다."
+            open {_inv} to player
+
+on inventory click:
+    if name of event-inventory contains "우편창구":
+        cancel event
+
+        if name of event-item contains "우편 상점 열기":
+            execute player command "/구매상점 열기 마을회관"
+        else if name of event-item contains "우편 보내기":
+            set {_inv} to chest inventory with 1 rows named "우편 보내기"
+            set slot 4 of {_inv} to nether star named "&9보낼 우편 선택하기" with lore "&f보낼 편지를 골라주세요."
+            open {_inv} to player
+    
+    if name of event-inventory contains "생활창구":
+        cancel event
+
+        if name of event-item contains "대출 갚기":
+            if {houseLevel::%uuid of player%} = 1:
+                set {_bell} to 50000
+            else if {houseLevel::%uuid of player%} = 2:
+                set {_bell} to 100000
+            else if {houseLevel::%uuid of player%} = 3:
+                set {_bell} to 400000
+            else if {houseLevel::%uuid of player%} = 4:
+                set {_bell} to 1000000
+            else if {houseLevel::%uuid of player%} = 5:
+                set {_bell} to 2500000
+
+            if {money::%uuid of player%} >= {_bell}:
+                send "&a야호! 대출을 갚았다!" to player
+                send "&a우편함으로 상자가 지급되었습니다." to player
+                set {money::%uuid of player%} to {money::%uuid of player%} - {_bell}
+                play sound "ui.toast.challenge_complete" with volume 0.5 for player
+                if {houseLevel::%uuid of player%} < 5:
+                    send "&c너굴이 집을 증축해주고 새로운 빚을 주었습니다." to player
+                if {houseLevel::%uuid of player%} < 4:
+                    set {_item} to 2 of chest
+                else:
+                    set {_item} to 64 of chest
+
+                sendMail(player,{_item})
+                add 1 to {houseLevel::%uuid of player%}
+                close player's inventory
+            else:
+                send "&c[ ! ] &f돈이 모자랍니다." to player
+                play sound "entity.villager.no" with volume 0.5 for player
+        else if name of event-item contains "친구 성취도 확인하기":
+            friendProcess(player)
+    if name of event-inventory contains "친구 성취도":
+        cancel event
+
+        set {_num} to index of event-slot - 9
+        if {friendprocess::%uuid of player%::process::%{_num}%} is not set:
+            if {_num} = 1:
+                set {_puuid} to uuid of player
+                loop all offline players:
+                    set {_tuuid} to uuid of loop-offline player
+                    if {_puuid} != {_tuuid}:
+                        if {friend::%{_puuid}%::%{_tuuid}%} >= 100:
+                            add 1 to {_count}
+                if {_count} >= 1:
+                    set {friendprocess::%uuid of player%::process::%{_num}%} to true
+                    add 1 to {leaf::%uuid of player%}
+                    set {_item} to 2 of ghast tear with custom model data 2 named "&a선물용 선물" with lore "&7&o남에게 선물할 수 있다!"
+                    sendMail(player,{_item})
+                    friendProcess(player)
+                    play sound "entity.experience_orb.pickup" with volume 0.5 for player
+                    send "&a퀘스트를 완료했습니다!" to player
+            else if {_num} = 2:
+                set {_puuid} to uuid of player
+                loop all offline players:
+                    set {_tuuid} to uuid of loop-offline player
+                    if {_puuid} != {_tuuid}:
+                        if {friend::%{_puuid}%::%{_tuuid}%} >= 100:
+                            add 1 to {_count}
+                if {_count} >= 3:
+                    set {friendprocess::%uuid of player%::process::%{_num}%} to true
+                    add 1 to {leaf::%uuid of player%}
+                    set {_item} to 2 of ghast tear with custom model data 2 named "&a선물용 선물" with lore "&7&o남에게 선물할 수 있다!"
+                    sendMail(player,{_item})
+                    friendProcess(player)
+                    play sound "entity.experience_orb.pickup" with volume 0.5 for player
+                    send "&a퀘스트를 완료했습니다!" to player
+            else if {_num} = 3:
+                set {_puuid} to uuid of player
+                loop all offline players:
+                    set {_tuuid} to uuid of loop-offline player
+                    if {_puuid} != {_tuuid}:
+                        add {friend::%{_puuid}%::%{_tuuid}%} to {_count}
+                if {_count} >= 500:
+                    set {friendprocess::%uuid of player%::process::%{_num}%} to true
+                    add 1 to {leaf::%uuid of player%}
+                    set {_item} to 2 of ghast tear with custom model data 2 named "&a선물용 선물" with lore "&7&o남에게 선물할 수 있다!"
+                    sendMail(player,{_item})
+                    friendProcess(player)
+                    play sound "entity.experience_orb.pickup" with volume 0.5 for player
+                    send "&a퀘스트를 완료했습니다!" to player
+            else if {_num} = 4:
+                set {_puuid} to uuid of player
+                loop all offline players:
+                    set {_tuuid} to uuid of loop-offline player
+                    if {_puuid} != {_tuuid}:
+                        if {friend::%{_puuid}%::%{_tuuid}%} >= 300:
+                            add 1 to {_count}
+                if {_count} >= 3:
+                    set {friendprocess::%uuid of player%::process::%{_num}%} to true
+                    add 1 to {leaf::%uuid of player%}
+                    set {_item} to 2 of ghast tear with custom model data 2 named "&a선물용 선물" with lore "&7&o남에게 선물할 수 있다!"
+                    sendMail(player,{_item})
+                    friendProcess(player)
+                    play sound "entity.experience_orb.pickup" with volume 0.5 for player
+                    send "&a퀘스트를 완료했습니다!" to player
+            else if {_num} = 5:
+                set {_puuid} to uuid of player
+                loop all offline players:
+                    set {_tuuid} to uuid of loop-offline player
+                    if {_puuid} != {_tuuid}:
+                        if {friend::%{_puuid}%::%{_tuuid}%} >= 1000:
+                            add 1 to {_count}
+                if {_count} >= 3:
+                    set {friendprocess::%uuid of player%::process::%{_num}%} to true
+                    add 1 to {leaf::%uuid of player%}
+                    set {_item} to 2 of ghast tear with custom model data 2 named "&a선물용 선물" with lore "&7&o남에게 선물할 수 있다!"
+                    sendMail(player,{_item})
+                    friendProcess(player)
+                    play sound "entity.experience_orb.pickup" with volume 0.5 for player
+                    send "&a퀘스트를 완료했습니다!" to player
+            else if {_num} = 6:
+                set {_puuid} to uuid of player
+                loop all offline players:
+                    set {_tuuid} to uuid of loop-offline player
+                    if {_puuid} != {_tuuid}:
+                        add {friend::%{_puuid}%::%{_tuuid}%} to {_count}
+                if {_count} >= 6000:
+                    set {friendprocess::%uuid of player%::process::%{_num}%} to true
+                    add 1 to {leaf::%uuid of player%}
+                    set {_item} to 2 of ghast tear with custom model data 2 named "&a선물용 선물" with lore "&7&o남에게 선물할 수 있다!"
+                    sendMail(player,{_item})
+                    friendProcess(player)
+                    play sound "entity.experience_orb.pickup" with volume 0.5 for player
+                    send "&a퀘스트를 완료했습니다!" to player
+            else if {_num} = 7:
+                set {_puuid} to uuid of player
+                loop all offline players:
+                    set {_tuuid} to uuid of loop-offline player
+                    if {_puuid} != {_tuuid}:
+                        if {friend::%{_puuid}%::%{_tuuid}%} >= 3000:
+                            add 1 to {_count}
+                if {_count} >= 1:
+                    set {friendprocess::%uuid of player%::process::%{_num}%} to true
+                    add 1 to {leaf::%uuid of player%}
+                    set {_item} to 2 of ghast tear with custom model data 2 named "&a선물용 선물" with lore "&7&o남에게 선물할 수 있다!"
+                    sendMail(player,{_item})
+                    friendProcess(player)
+                    play sound "entity.experience_orb.pickup" with volume 0.5 for player
+                    send "&a퀘스트를 완료했습니다!" to player
+    if name of event-inventory contains "우편 보내기":
+        cancel event
+        
+        if "%event-item%" contains "written book":
+            if author of event-item is player:
+                set {sendMailitem::%uuid of player%} to 1 of event-item
+                set item amount of event-item to item amount of event-item - 1
+                set {_inv} to chest inventory with 6 rows named "보낼 사람 정하기"
+                set slot 4 of {_inv} to nether star named "&9보낼 사람 선택하기" with lore "&f보낼 사람을 골라주세요."
+                loop all offline players:
+                    add 1 to {_num}
+                    if {name::%uuid of loop-offline player%} is set:
+                        set {_name} to {name::%uuid of loop-offline player%}
+                        set slot 8 + {_num} of {_inv} to skull of loop-offline player named "&9%{_name}%"
+                open {_inv} to player
+            
+
+    if name of event-inventory contains "보낼 사람 정하기":
+        cancel event
+        if "%event-item%" contains "head":
+            set {_name} to uncolored name of event-item
+            set {_Puuid} to uuid of player
+            loop all offline players:
+                if uncolored {name::%uuid of loop-offline player%} = {_name}:
+                    set {_Tuuid} to uuid of loop-offline player
+                    set {_beforeFriend} to {friend::%{_Puuid}%::%{_Tuuid}%}
+                    if {letter::%{_Puuid}%::%{_Tuuid}%} is not set:
+                        addFriendP(player,loop-offline player,100)
+                        set {letter::%{_Puuid}%::%{_Tuuid}%} to true
+                        set {_friend} to {friend::%{_Puuid}%::%{_Tuuid}%}
+                    send "&a우편을 보냈습니다!" to player
+                    if {_friend} is set:
+                        send "&7&o상대와의 호감도 &c❤&f%{_beforeFriend}% -> %{_friend}%" to player
+                    play sound "entity.experience_orb.pickup" with volume 0.5 for player
+                    sendMail(loop-offline player,{sendMailitem::%uuid of player%})
+                    delete {sendMailitem::%uuid of player%}
+                    close player's inventory
+
+on inventory close:
+    if name of event-inventory contains "보낼 사람 정하기":
+        if {sendMailitem::%uuid of player%} is set:
+            if player don't have enough space for {sendMailitem::%uuid of player%}:
+                sendMail(player,{sendMailitem::%uuid of player%})
+                send "&c[ ! ] &f인벤토리에 빈 공간이 없어 우편으로 아이템을 수령했습니다." to player
+            else:
+                give {sendMailitem::%uuid of player%} to player
+            delete {sendMailitem::%uuid of player%}
+
+
+

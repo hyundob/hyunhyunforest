@@ -1,0 +1,205 @@
+function recipeOpen(p: player, n: number):
+    set {_uuid} to uuid of {_p}
+    set {_inv} to chest inventory with 6 rows named "&f레시피 제작 %{_n}%"
+    set {_page} to ({_n} - 1)*4
+
+    loop 4 times:
+        delete {_recipeOK}
+        set {_num1} to 0
+        add 1 to {_page}
+        set {_value} to {recipeKnown::%{_uuid}%::%{_page}%}
+        add 1 to {_num}
+        set slot {_num}*9 of {_inv} to {recipe::item::%{_value}%}
+        set {_max} to 0
+        loop {recipeItem::%{_value}%::*}:
+            add 1 to {_max}
+        loop {recipeItem::%{_value}%::*}:
+            add 1 to {_num1}
+            set slot {_num} * 9 + {_num1} + 1 of {_inv} to loop-value-2
+            if {_p} has loop-value-2:
+                add 1 to {_recipeOK}
+
+            if {_num1} = {_max}:
+                if {_recipeOK} = {_max}:
+                    set slot {_num} * 9 + 6 + 1 of {_inv} to white dye with custom model data 3 named "&a제작하기" with lore "&f모든 재료를 소모하여 아이템을 제작합니다."
+                else:
+                    set slot {_num} * 9 + 6 + 1 of {_inv} to white dye with custom model data 4 named "&c제작 불가" with lore "&f재료가 모자라 제작할 수 없습니다."
+                
+        set {_get} to 0
+        loop {recipeKnown::%{_uuid}%::*}:
+            add 1 to {_get}
+        if {_n} >= 2:
+            set slot 8 of {_inv} to white dye with custom model data 6 named "&a이전 페이지" with lore "&f이전 페이지로 이동합니다."
+        if {_n} < rounded up ({_get}/4):
+            set slot 8 + 9*5 of {_inv} to white dye with custom model data 7 named "&a다음 페이지" with lore "&f다음 페이지로 이동합니다."
+    open {_inv} to {_p}
+
+command /레시피 [<text>] [<text>]:
+    trigger:
+        if player is op:
+            if arg 1 is "설정":
+                set {_inv} to chest inventory with 6 row named "레시피 설정"
+                loop {recipe::item::*}:
+                    add 1 to {_slot}
+                    if {_slot} > 6 * 9:
+                        exit loop
+                    set slot {_slot} - 1 of {_inv} to loop-value
+                open {_inv} to player
+            if arg 1 is "수정":
+                set {_inv} to chest inventory with 6 row named "레시피 수정"
+                loop {recipe::item::*}:
+                    add 1 to {_slot}
+                    if {_slot} > 6 * 9:
+                        exit loop
+                    set slot {_slot} - 1 of {_inv} to loop-value
+                open {_inv} to player
+            if arg 1 is "얻기":
+                set {_inv} to chest inventory with 6 row named "레시피 얻기"
+                loop {recipe::item::*}:
+                    add 1 to {_slot}
+                    if {_slot} > 6 * 9:
+                        exit loop
+                    set slot {_slot} - 1 of {_inv} to loop-value
+                open {_inv} to player
+            if arg 1 is "이름":
+                set {_inv} to chest inventory with 6 row named "레시피 이름"
+                set {recipe.tmp::%uuid of player%} to arg 2
+                loop {recipe::item::*}:
+                    add 1 to {_slot}
+                    if {_slot} > 6 * 9:
+                        exit loop
+                    set slot {_slot} - 1 of {_inv} to loop-value
+                open {_inv} to player
+            if arg 1 is "랜덤":
+                set {_inv} to chest inventory with 6 row named "레시피 랜덤"
+                loop {randomrecipe::item::*}:
+                    add 1 to {_slot}
+                    if {_slot} > 6 * 9:
+                        exit loop
+                    set slot {_slot} - 1 of {_inv} to loop-value
+                open {_inv} to player
+
+        if arg 1 is "열기":
+            recipeOpen(player,1)
+
+on inventory click:
+    if name of event-inventory contains "레시피 수정":
+        cancel event
+        set {_slotNum} to index of clicked slot + 1
+        send "%{_slotNum}%" to player
+        set {_inv} to chest inventory with 1 row named "레시피 아이템 설정 %{_slotNum}%"
+        loop {recipeItem::%{_slotNum}%::*}:
+            add 1 to {_slot}
+            set slot {_slot} - 1 of {_inv} to loop-value
+        open {_inv} to player
+    if name of event-inventory contains "레시피 제작":
+        cancel event
+        set {_name} to uncolored name of event-inventory
+        replace all "레시피 제작" and " " with "" in {_name}
+        set {_name} to {_name} parsed as integer
+        if name of event-item contains "이전 페이지":
+            recipeOpen(player,{_name}-1)
+        else if name of event-item contains "다음 페이지":
+            recipeOpen(player,{_name}+1)
+        else if name of event-item contains "제작하기":
+            set {_line} to rounded down (index of clicked slot / 9)
+
+            if "%click type%" contain "SHIFT":
+                set {_loop} to 10
+            else:
+                set {_loop} to 1
+
+            loop {_loop} times:
+                loop 5 times:
+                    if slot {_line}*9 + 1 + loop-value-2 of event-inventory is not air:
+                        add 1 to {_Make}
+
+                loop 5 times:
+                    set {_item} to slot {_line}*9 + 1 + loop-value-2 of event-inventory
+                    if amount of {_item} in player's inventory >= item amount of {_item}:
+                        add 1 to {_Okay}
+                
+                if {_Okay} = {_Make}:
+                    add 1 to {_Amount}
+                    loop 5 times:
+                        set {_item} to slot {_line}*9 + 1 + loop-value-2 of event-inventory
+                        remove {_item} from player's inventory
+                else:
+                    exit loop
+            set {_item} to slot {_line}*9 of event-inventory
+            set item amount of {_item} to item amount of {_item} * {_Amount}
+            play sound "item.armor.unequip_wolf" with volume 0.5 to player
+            if player don't have enough space for {_item}:
+                sendMail(player,{_item})
+                send "&c[ ! ] &f인벤토리에 빈 공간이 없어 우편으로 아이템을 수령했습니다." to player 
+            else:
+                give {_item} to player
+
+            recipeOpen(player,{_name})
+    if name of event-inventory contains "레시피 얻기":
+        cancel event
+        set {_item} to event-item
+
+                
+        set {_slotNum} to index of clicked slot + 1
+        set {_recipeName} to {recipeName::%{_slotNum}%}
+        set {_recipe} to ghast tear with custom model data 14 named "&f%{_recipeName}% &6레시피" with lore "&9레시피" and "&f일련번호 %{_slotNum}%" and "&7&o우클릭 시 레시피를 배울 수 있다."
+        give {_recipe} to player
+    if name of event-inventory contains "레시피 이름":
+        cancel event
+        set {_item} to event-item
+
+        set {_slotNum} to index of clicked slot + 1
+        set {recipeName::%{_slotNum}%} to {recipe.tmp::%uuid of player%}
+    if name of event-inventory contains "제작대":
+        cancel event
+        if name of event-item contains "특수 조합대 열기":
+            recipeOpen(player,1)
+        else if name of event-item contains "제작대 열기":
+            open crafting table to player
+        
+on inventory close:
+    if event-inventory's display name contain "레시피 설정":
+        delete {recipe::item::*}
+        loop 6 * 9 times:
+            add slot loop-number - 1 of event-inventory to {recipe::item::*}
+        send "&e레시피 설정"
+    else if event-inventory's display name contain "레시피 아이템 설정":
+        set {_name} to event-inventory's display name
+        replace "레시피 아이템 설정" and " " with "" in {_name}
+        delete {recipeItem::%{_name}%::*}
+        loop 5 times:
+            if slot loop-number - 1 of event-inventory is not air:
+                add slot loop-number - 1 of event-inventory to {recipeItem::%{_name}%::*}
+        send "&e레시피 아이템 설정 %{_name}%"
+    else if event-inventory's display name contain "레시피 랜덤":
+        delete {randomrecipe::item::*}
+        loop 6 * 9 times:
+            if slot loop-number - 1 of event-inventory is not air:
+                add slot loop-number - 1 of event-inventory to {randomrecipe::item::*}
+
+on rightclick holding ghast tear:
+    if custom model data of player's tool is 14:
+        set {_recipeNum} to uncolored line 2 of lore of player's tool
+        replace all "일련번호" and " " with "" in {_recipeNum}
+        set {_recipeNum} to {_recipeNum} parsed as integer
+        loop {recipeKnown::%uuid of player%::*}:
+            if loop-value = {_recipeNum}:
+                set {_recipe} to false
+
+        if {_recipe} is not false:
+            add {_recipeNum} to {recipeKnown::%uuid of player%::*}
+            send "&a레시피를 배웠습니다!" to player
+            set item amount of player's tool to item amount of player's tool - 1
+        else:
+            send "&c[ ! ] &f이미 배운 레시피입니다." to player
+
+on rightclick on crafting table:
+    cancel event
+
+    set {_inv} to chest inventory with 3 rows named "제작대"
+
+    set slot 3 + 9 of {_inv} to ghast tear with custom model data 14 named "&6특수 조합대 열기" with lore "&f특수 조합대를 엽니다."
+    set slot 5 + 9 of {_inv} to crafting table named "&e제작대 열기" with lore "&f제작대를 엽니다."
+
+    open {_inv} to player

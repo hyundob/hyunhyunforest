@@ -1,0 +1,112 @@
+options:
+    afktime: 1800 # how many seconds a player has to be afk before the skript runs.
+
+on player move:
+    if {afk::%uuid of player%} is set:
+        delete {afktime::%uuid of player%}
+
+command /afkget <player>:
+    trigger:
+        if player is op:
+            send "%{afktime::%uuid of arg 1%}%" to player
+        
+every second:
+    loop all players:
+        set {_uuid} to uuid of loop-player
+
+        if location of loop-player != {loc::%{_uuid}%}:
+            delete {afktime::%{_uuid}%}
+        if location of loop-player = {loc::%{_uuid}%}:
+            add 1 to {afktime::%{_uuid}%}
+        if {afktime::%{_uuid}%} >= 1800:
+            if {afk::%{_uuid}%} is not set:
+                set {afk::%{_uuid}%} to true
+                stop all sounds for loop-player
+                set {resettipastloc::%{_uuid}%} to loop-player's location
+                teleport loop-player to {resettiloc}
+
+        set {loc::%{_uuid}%} to location of loop-player
+
+command /도루묵초기화 <player>:
+    trigger:
+        if player is op:
+            set {_uuid} to uuid of arg 1
+            delete {resettiChat::%{_uuid}%}
+            delete {resettiTime::%{_uuid}%}
+            delete {sorry::%{_uuid}%}
+
+function resetti(p: player):
+    set {_uuid} to uuid of {_p}
+    if {resetticooldown::%{_uuid}%} is not set:
+        set {resetticooldown::%{_uuid}%} to true
+        add 1 to {resettiChat::%{_uuid}%}
+        if {resettiTime::%{_uuid}%} != 1:
+            set {resettiTime::%{_uuid}%} to 1
+        if {resettiChat::%{_uuid}%} = 1:
+            stop all sounds for {_p}
+            play sound "custom.resetti" in record category with volume 100000 and pitch 1.0 for {_p}
+
+        set {resetti::Chat::1::*} to "&멈추그래이-------!!!", "&기다리라 안카나--!!", "지금 잠수 탄 거냔 말이가-!", "&잠수타지 말고 나가라는 그 말이 그리 어려웠드나!!", "...후우", "갑자기 큰 소리를 냈더니 어지럽구마" and "갈꾸마!!"
+        set {resetti::Chat::2::*} to "&멈추그래이-------!!!", "&기다리라 안카나--!!", "지금 잠수 탄 거냔 말이가-!", "&잠수타지 말고 나가라는 그 말이 그리 어려웠드나!!", "...후우", "갑자기 큰 소리를 냈더니 어지럽구마" and "갈꾸마!!"
+  
+        set {_chat} to "%{resetti::Chat::%{resettiTime::%{_uuid}%}%::%{resettiChat::%{_uuid}%}%}%"
+
+        #번개소리
+        if {_chat} contains "&":
+            play sound "entity.lightning_bolt.impact" to {_p}
+            shakeHead({_p})
+            replace all "&" with "" in {_chat}
+            set {sorry::%{_uuid}%} to true
+
+        #죄송합니다 입력하기
+        if {_chat} contains "@":
+            add -1 to {resettiChat::%{_uuid}%}
+            replace all "@" with "" in {_chat}
+            set {sorry::%{_uuid}%} to true
+
+        loop {resetti::Chat::%{resettiTime::%{_uuid}%}%::*}:
+            add 1 to {_max}
+
+        set {_chatlength} to length of {_chat}
+        loop {_chatlength} times:
+            add 1 to {_num}
+            set {_msg} to first loop-value characters of {_chat}
+            loop 20 times:
+                send "" to {_p}
+
+            send "   &a[ 도로묵 씨 ]" to {_p}
+            send "%{_msg}%" to {_p}
+            play sound "custom.animal" with volume 1.0 and pitch a random number between 0.9 and 1.1 for {_p}
+            wait 2 ticks
+            if {_num} = {_chatlength}:
+                delete {resetticooldown::%{_uuid}%}
+                if {_max} = {resettiChat::%{_uuid}%}:
+                    stop all sounds for {_p}
+                    add 1 to {afkcount%{_uuid}%}
+                    delete {afk::%{_uuid}%}
+                    delete {resettiChat::%{_uuid}%}
+                    teleport {_p} to {resettipastloc::%{_uuid}%}
+
+command /도로묵위치지정:
+    trigger:
+        if player is op:
+            set {resettiloc} to player's location
+
+command /afkreset <player>:
+    trigger:
+        if player is op:
+            delete {afk::%uuid of arg 1%}
+
+function shakeHead(p: player):
+    set {_loc} to location of {_p}
+    set {_orloc} to location of {_p}
+    loop 10 times:
+        set pitch of {_loc} to a random number between pitch of {_loc} + 5 and pitch of {_loc} - 5
+        set yaw of {_loc} to a random number between yaw of {_loc} + 5 and yaw of {_loc} - 5
+
+        teleport {_p} to {_loc}
+        wait 1 ticks
+        if loop-value = 10:
+            teleport {_p} to {_orloc}
+                
+

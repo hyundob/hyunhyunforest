@@ -1,0 +1,50 @@
+options:
+	c: &e벨
+
+command /수표 [<integer>] [<integer>]:
+	trigger:
+		if arg 1 is not set:
+			message "&c[ ! ] &f/수표 [금액] [수량]"
+			stop
+			
+		if arg 1 is set:
+			if arg 2 is set:
+				set {_count} to arg 2
+			else:
+				set {_count} to 1
+
+			if {_count} > 64:
+				message "&c수표는 64개를 넘겨서 요청할 수 없습니다."
+			else:
+				if {money::%uuid of player%} >= arg 1 * {_count} * 1.1:
+					if arg 1 >= 100:
+						loop 36 times:
+							slot loop-number - 1 of player is air
+							set {_has.space} to true
+							exit loop
+						if {_has.space} is not set:
+							send "&c[ ! ] &f인벤토리 공간을 비우신 후 다시 시도해주세요."
+							exit
+						give {_count} of ghast tear with custom model data 4 named "{@c} &f %arg 1%&e" with lore "&9발행인 &f%{name::%uuid of player%}%" to player
+						remove arg 1 * {_count} * 1.1 from {money::%uuid of player%}
+						message "&a성공적으로 수표를 생성했습니다!"
+						stop
+					else:
+						message "&c[ ! ] &f수표는 100원 미만으로 발행할 수 없습니다."
+						stop			
+				else:
+					message "&c[ ! ] &f요청한 돈이 소지하고 있는 돈보다 높습니다!"
+					stop
+		else:
+			message "&c[ ! ] &f/수표 [금액] [수량]"
+			stop
+			
+on rightclick:
+	if player's tool's name contains "{@c}":
+		set {_돈} to uncolored name of player's tool
+		replace all "벨" and " " and "" with "" in {_돈}
+		set {_돈} to {_돈} parsed as integer 
+		remove 1 of player's tool from player's tool
+		addMoney(player, "", {_돈})
+		message "&a벨을 획득했습니다! &f+%{_돈}%" to player
+		stop

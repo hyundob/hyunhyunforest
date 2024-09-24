@@ -1,0 +1,235 @@
+function itemLv(i: item):: integer:
+    set {_itemLv} to uncolored line 2 of lore of {_i}
+    if {_itemLv} contains "+":
+        replace all "아이템 레벨" and " " and "(+" and ")" with "" in {_itemLv}
+        set {_itemLv} to {_itemLv} parsed as integer
+        if {_itemLv} >= 1000:
+            set {_itemLv} to rounded down {_itemLv} / 100
+        else:
+            set {_itemLv} to rounded down {_itemLv} / 10
+    else:
+        replace all "아이템 레벨" and " " with "" in {_itemLv}
+        set {_itemLv} to {_itemLv} parsed as integer
+    if {_itemLv} is not set:
+        set {_itemLv} to 1
+    return {_itemLv}
+
+function itemLvPlus(i: item):: integer:
+    set {_itemLv} to uncolored line 2 of lore of {_i}
+    if {_itemLv} contains "+":
+        replace all "아이템 레벨" and " " and "(+" and ")" with "" in {_itemLv}
+        set {_itemLv} to {_itemLv} parsed as integer
+        if {_itemLv} >= 1000:
+            set {_itemLv} to mod({_itemLv},100)
+        else:
+            set {_itemLv} to mod({_itemLv},10)
+    else:
+        set {_itemLv} to 0
+    return {_itemLv}
+
+function upgradeTable(i: item, p: player):
+    set {_uuid} to uuid of {_p}
+    set {_inv} to chest inventory with 2 rows named "&f"
+    set slot 10 of {_inv} to {_i}
+
+    if {_i} is not air:
+        set {_itemLvPlus} to itemLvPlus({_i})
+        set {_itemLv} to itemLv({_i})
+
+        if itemLvPlus({_i}) >= 1:
+            set {_lowCount} to itemLv({_i}) * 2 * (0.5 + itemLvPlus({_i}))
+        else:
+            set {_lowCount} to itemLv({_i}) * 2
+
+        if itemLv({_i}) >= 7:
+            set {_highCount} to (5 + (itemLv({_i})-7) * 2) + (5*itemLvPlus({_i}))
+
+        if itemLv({_i}) != 15:
+            if {_highCount} >= 1:
+                set slot 13 of {_inv} to {_highCount} of ghast tear with custom model data 10 named "&9필요 상급 강화석" with lore "&f%{_highCount}%개"
+            if line 1 of lore of {_i} contains "액세서리":
+                set {_Acces} to {_i}
+                set line 2 of lore of {_Acces} to "&f아이템 레벨 1"
+                loop 5 times:
+                    if line loop-value of lore of {_Acces} is "":
+                        delete line loop-value of lore of {_Acces}
+                    if line loop-value of lore of {_Acces} contains "교환 불가":
+                        delete line loop-value of lore of {_Acces}
+                set {_AcCMD} to custom model data of {_i}
+                set {_lowCount} to 2 + 4 * ( itemLv({_i}) - 1)
+                if itemLv({_i}) >= 7:
+                    set {_highCount} to 3 + (itemLv({_i})-7) * 2
+                set {_AcCount} to rounded (1 + 4 * ( itemLv({_i}) ^ 2 ) / ( 10^2 ) )
+                if {_highCount} >= 1:
+                    set slot 13 of {_inv} to {_highCount} of ghast tear with custom model data 10 named "&9필요 상급 강화석" with lore "&f%{_highCount}%개"
+                    set slot 14 of {_inv} to {_AcCount} of {_Acces}
+                else:
+                    set slot 13 of {_inv} to {_AcCount} of {_Acces}
+            set slot 12 of {_inv} to {_lowCount} of ghast tear with custom model data 9 named "&9필요 강화석" with lore "&f%{_lowCount}%개"
+            
+
+        if amount of ghast tear with custom model data 9 in {_p}'s inventory < {_lowCount}:
+            set {_canUpgrade} to false
+        if {_highCount} >= 1:
+            if amount of ghast tear with custom model data 10 in {_p}'s inventory < {_highCount}:
+                set {_canUpgrade} to false
+        if {_AcCount} >= 1:
+            if amount of {_Acces} in {_p}'s inventory < {_AcCount}:
+                set {_canUpgrade} to false
+
+        if {_canUpgrade} is false:
+            set slot 16 of {_inv} to white dye with custom model data 4 named "&c강화 불가" with lore "&f재료가 모자랍니다."
+        else:
+            set slot 16 of {_inv} to white dye with custom model data 3 named "&a강화하기" with lore "&f모든 재료를 사용하여 아이템 레벨을 강화합니다."
+        if itemLv({_i}) = 15:
+            set slot 16 of {_inv} to white dye with custom model data 4 named "&c강화 불가" with lore "&f이미 최고 레벨입니다."
+
+        set {upgrade::low::%{_uuid}%} to {_lowCount}
+        set {upgrade::high::%{_uuid}%} to {_highCount}
+        set {upgrade::ac::%{_uuid}%} to {_AcCount}
+        set {upgrade::acItem::%{_uuid}%} to {_Acces}
+
+        if line 1 of lore of {_i} contains "액세서리":
+            if itemLv({_i}) > 1:
+                if itemLvPlus({_i}) = 0:
+                    set slot 16 of {_inv} to white dye with custom model data 4 named "&c강화 불가" with lore "&f강화가 불가능한 액세서리입니다."
+                    set slot 12 of {_inv} to air
+                    set slot 13 of {_inv} to air
+                    set slot 14 of {_inv} to air
+
+    set slot 4 of {_inv} to nether star named "&9장비 강화" with lore "&f강화할 아이템을 클릭해주세요." and "" and "&7&o- 장비 강화에는 강화석이 필요합니다." and "&7&o- 강화를 많이 시도한 아이템일수록 더 많은 재료를 필요로 합니다." and "&7&o- 한 번 강화한 아이템은 거래할 수 없습니다."
+    open {_inv} to {_p}
+
+on rightclick on smithing table:
+    cancel event
+    open chest with 2 rows named "&f" to player
+    set {_inv} to chest inventory with 3 rows named "&f대장장이 작업대"
+
+    set slot 11 of {_inv} to anvil named "&a장비 수리" with lore "&f장비를 수리합니다."
+    set slot 13 of {_inv} to smithing table named "&a장비 강화" with lore "&f장비를 강화합니다."
+    set slot 15 of {_inv} to ghast tear with custom model data 9 named "&a액세서리 분해" with lore "&f액세서리를 분해합니다."
+
+    open {_inv} to player
+
+function fixTable(i: item, p: player):
+    set {_uuid} to uuid of {_p}
+    set {_inv} to chest inventory with 2 rows named "&f"
+    set slot 12 of {_inv} to {_i}
+    set slot 4 of {_inv} to nether star named "&9장비 수리" with lore "&f수리할 아이템을 클릭해주세요." and "" and "&7&o- 장비 수리에는 수리 키트가 필요합니다." and "&7&o- 수리 키트는 특수 레시피로 제작이 가능합니다."
+
+    set {_max} to max durability of {_i}
+    set {_dur} to durability of {_i}
+    if {_max} = {_dur}:
+        set slot 14 of {_inv} to white dye with custom model data 4 named "&c수리 불가" with lore "&f이미 내구도가 최대입니다."
+    else:
+        if amount of ghast tear with custom model data 11 in {_p}'s inventory >= 1:
+            set slot 14 of {_inv} to white dye with custom model data 3 named "&a수리하기" with lore "&f수리 키트를 1개 사용해 장비를 수리합니다."
+        else:
+            set slot 14 of {_inv} to white dye with custom model data 4 named "&c수리 불가" with lore "&f수리 키트가 없습니다."
+    open {_inv} to {_p}
+
+on inventory click:
+    if name of event-inventory contains "대장장이 작업대":
+        cancel event
+        if name of event-item contains "장비 강화":
+            upgradeTable(air,player)
+        else if name of event-item contains "장비 수리":
+            set {_inv} to chest inventory with 2 rows named "&f"
+            set slot 4 of {_inv} to nether star named "&9장비 수리" with lore "&f수리할 아이템을 클릭해주세요." and "" and "&7&o- 장비 수리에는 수리 키트가 필요합니다." and "&7&o- 수리 키트는 특수 레시피로 제작이 가능합니다."
+            open {_inv} to player
+        else if name of event-item contains "액세서리 분해":
+            set {_inv} to chest inventory with 2 rows named "&f"
+            set slot 4 of {_inv} to nether star named "&9액세서리 분해" with lore "&f분해할 액세서리를 더블 클릭해주세요." and "" and "&7&o- 액세서리만 분해할 수 있습니다." and "&7&o- 액세서리 분해 시 소량의 강화석을 받습니다."
+            open {_inv} to player
+
+    if name of event-inventory contains "":
+        cancel event
+        if clicked inventory is not player' current inventory:
+            if line 1 of lore of event-item contains "도구":
+                fixTable(event-item,player)
+                set event-slot to air
+        else:
+            if name of event-item contains "수리하기":
+                remove 1 of ghast tear with custom model data 11 from player's inventory
+                set {_max} to max durability of slot 12 of event-inventory
+                set {_dur} to durability of slot 12 of event-inventory
+
+                add rounded (a random integer between 10 and 25 * {_max} / 100) to {_dur}
+                if {_dur} >= {_max}:
+                    set {_dur} to {_max}
+
+                set durability of slot 12 of event-inventory to {_dur}
+                set {_item} to slot 12 of event-inventory
+                play sound "block.anvil.use" with volume 0.5 to player
+                play sound "entity.player.levelup" with volume 0.5 to player
+                send "&a수리를 성공했습니다!" to player
+                set slot 12 of event-inventory to air
+                fixTable({_item},player)
+
+    if name of event-inventory contains "":
+        cancel event
+        if clicked inventory is not player' current inventory:
+            if line 1 of lore of event-item contains "액세서리":
+                if "%click type%" contain "DOUBLE":
+                    play sound "item.shield.break" with volume 0.5 to player
+                    play sound "entity.player.levelup" with volume 0.5 to player
+                    send "&a분해를 성공했습니다!" to player
+
+                    if itemLv(event-item) >= 8:
+                        set {_item} to rounded (1 + itemLv(event-item)^2 / 12^2) of ghast tear with custom model data 10 named "&6상급 강화석"
+                    else:
+                        set {_item} to rounded (1 + itemLv(event-item)^2 / 4^2) of ghast tear with custom model data 9 named "&d강화석"
+                    set item amount of event-item to item amount of event-item - 1
+                    if player don't have enough space for {_item}:
+                        sendMail(player,{_item})
+                        send "&c[ ! ] &f인벤토리에 빈 공간이 없어 우편으로 아이템을 수령했습니다." to player 
+                    else:
+                        give {_item} to player
+
+    if name of event-inventory contains "":
+        cancel event
+        if clicked inventory is not player' current inventory:
+            if line 2 of lore of event-item contains "아이템 레벨":
+                set {_item} to event-item
+                set item amount of event-slot to item amount of event-slot - 1
+                set item amount of {_item} to 1
+                upgradeTable({_item},player)
+        else:
+            if name of event-item contains "강화하기":
+                remove {upgrade::low::%uuid of player%} of ghast tear with custom model data 9 from player's inventory
+                remove {upgrade::high::%uuid of player%} of ghast tear with custom model data 10 from player's inventory
+                remove {upgrade::ac::%uuid of player%} of {upgrade::acItem::%uuid of player%} from player's inventory
+                set line 2 of lore of slot 10 of event-inventory to "&f아이템 레벨 %itemLv(slot 10 of event-inventory) + 1% &d(+%itemLvPlus(slot 10 of event-inventory) + 1%)"
+                loop 5 times:
+                    if line loop-value of lore of slot 10 of event-inventory contains "교환 불가":
+                        exit loop
+                    if line loop-value of lore of slot 10 of event-inventory is not set:
+                        send "%loop-value%" to player
+                        set line loop-value of lore of slot 10 of event-inventory to "&c교환 불가 &f%player%"
+                        exit loop
+                set {_item} to slot 10 of event-inventory
+                set slot 10 of event-inventory to air
+                add {upgrade::low::%uuid of player%} to {spendStone::%uuid of player%}
+                play sound "block.anvil.use" with volume 0.5 to player
+                play sound "entity.player.levelup" with volume 0.5 to player
+                send "&a강화를 성공했습니다!" to player
+                upgradeTable({_item},player)
+            else if name of event-item contains "강화 불가":
+                play sound "entity.villager.no" with volume 0.5 to player
+
+on inventory close:
+    if name of event-inventory contains "":
+        set {_item} to slot 10 of event-inventory
+        if player don't have enough space for {_item}:
+            sendMail(player,{_item})
+            send "&c[ ! ] &f인벤토리에 빈 공간이 없어 우편으로 아이템을 수령했습니다." to player
+        else:
+            give {_item} to player
+
+    if name of event-inventory contains "":
+        set {_item} to slot 12 of event-inventory
+        if player don't have enough space for {_item}:
+            sendMail(player,{_item})
+            send "&c[ ! ] &f인벤토리에 빈 공간이 없어 우편으로 아이템을 수령했습니다." to player
+        else:
+            give {_item} to player

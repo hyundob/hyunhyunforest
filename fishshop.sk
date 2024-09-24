@@ -1,0 +1,33 @@
+# command /낚시상점:
+#     trigger:
+#         open chest with 6 rows named "&f" to player
+
+# on inventory click:
+#     if player's inventory name contains "":
+#         cancel event
+#         set {_item} to event-item
+#         if line 1 of lore of {_item} contains "물고기":
+#             set {_num} to 0
+#             loop {FishingList::River::item::*}:
+#                 add 1 to {_num}
+#                 if loop-value's name is {_item}'s name:
+#                     set {_sell} to {FishingList::River::sell::%{_num}%}
+#             set {_num} to 0
+#             loop {FishingList::Sea::item::*}:
+#                 add 1 to {_num}
+#                 if loop-value's name is {_item}'s name:
+#                     set {_sell} to {FishingList::Sea::sell::%{_num}%}
+
+#             set {_fresh} to uncolored line 2 of lore of {_item}
+#             replace all "신선도" and " " with "" in {_fresh}
+#             set {_fresh} to {_fresh} parsed as integer
+
+#             set {_amount} to item amount of {_item}
+
+#             set {_addMoney} to rounded ( {_sell} * {_fresh} / 100 * {_amount} )
+#             set {money::%uuid of player%} to {money::%uuid of player%} + {_addMoney}
+#             set event-slot to air
+#             send "&a아이템을 판매하였습니다! &f+%{_addMoney}%"
+
+
+            

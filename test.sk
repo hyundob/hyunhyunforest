@@ -1,0 +1,14 @@
+on damage:
+  wait 1 tick
+  set {lastdamage.%uuid of attacker%} to now
+ 
+  remove bossbar "damage.%uuid of attacker%"
+  set {_health} to health of victim
+  set {_healthmax} to max health of victim
+  set {_healthmaxtot} to {_health} / {_healthmax} * 100
+  create bossbar titled "&7&l%victim%" and id "damage.%uuid of attacker%" for attacker with progress {_healthmaxtot} with colors red
+ 
+  wait 10 seconds
+  set {_waited} to difference between {lastdamage.%uuid of attacker%} and now
+  if {_waited} is more than 9.5 seconds:
+    remove bossbar "damage.%uuid of attacker%"

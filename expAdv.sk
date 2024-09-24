@@ -1,0 +1,269 @@
+on craft:
+    if event-slot is wooden shovel or stone shovel or iron shovel or golden shovel:
+        cancel event
+        set {_item} to event-slot
+        if "%click type%" contain "SHIFT":
+            cancel event
+            send "&c[ ! ] &f도구를 제작할 땐 Shift를 누를 수 없습니다."
+            stop
+        set line 1 of lore of {_item} to "&9발굴 도구"
+        if event-slot is wooden shovel:
+            set line 2 of lore of {_item} to "&f아이템 레벨 1"
+        else if event-slot is stone shovel:
+            set line 2 of lore of {_item} to "&f아이템 레벨 3"
+        else if event-slot is iron shovel:
+            set line 2 of lore of {_item} to "&f아이템 레벨 5"
+        else if event-slot is golden shovel:
+            set line 2 of lore of {_item} to "&f아이템 레벨 8"
+        loop 9 times:
+            set item amount of slot loop-number of player's current inventory to item amount of slot loop-number of player's current inventory - 1
+        set event-slot to air
+        loop integers from 0 to 35:
+            slot loop-integer of inventory of player is air
+            add 1 to {_count}
+            {_count} >= 1
+            set {_result} to true
+        if {_result} is true:
+            give {_item} to player
+        else:
+            drop {_item} at player without velocity
+
+on craft:
+    if event-slot is wooden axe or stone axe or iron axe or golden axe:
+        cancel event
+        set {_item} to event-slot
+        if "%click type%" contain "SHIFT":
+            cancel event
+            send "&c[ ! ] &f도구를 제작할 땐 Shift를 누를 수 없습니다."
+            stop
+        set line 1 of lore of {_item} to "&9벌목 도구"
+        if event-slot is wooden axe:
+            set line 2 of lore of {_item} to "&f아이템 레벨 1"
+        else if event-slot is stone axe:
+            set line 2 of lore of {_item} to "&f아이템 레벨 3"
+        else if event-slot is iron axe:
+            set line 2 of lore of {_item} to "&f아이템 레벨 5"
+        else if event-slot is golden axe:
+            set line 2 of lore of {_item} to "&f아이템 레벨 8"
+        loop 9 times:
+            set item amount of slot loop-number of player's current inventory to item amount of slot loop-number of player's current inventory - 1
+        set event-slot to air
+        loop integers from 0 to 35:
+            slot loop-integer of inventory of player is air
+            add 1 to {_count}
+            {_count} >= 1
+            set {_result} to true
+        if {_result} is true:
+            give {_item} to player
+        else:
+            drop {_item} at player without velocity
+
+on player move:
+    loop all item displays in radius 10 around player:
+        if storeAccessory(player,123) >= 1:
+            chance of 30%:
+                show 5 glow with offset of 0.2, 0.2, 0.2 and speed 0.5 at loop-entity
+                play sound "block.amethyst_block.resonate" in block category with volume 0.5 and pitch 2.0 at loop-entity for player
+        set {_화석} to false
+    
+    add 1 to {findfossil::%uuid of player%}
+    #발굴의 대가 : 발견 확률 증가
+    if storeAccessory(player,123) >= 1:
+        set {_fossilcooldown} to operationAc(storeAccessory(player,123),1400,200)
+    else:
+        set {_fossilcooldown} to 2000
+
+    if {findfossil::%uuid of player%} < {_fossilcooldown}:
+        set {_화석} to false
+
+    if {_화석} is not false:
+        #발굴의 대가 : 발견 확률 증가
+        if storeAccessory(player,123) >= 1:
+            set {_ac123} to operationAc(storeAccessory(player,123),0.01,1.5)
+        chance of 0.03 + {_ac123}%:
+            loop all blocks in radius 10 around player:
+                if loop-block is grass_block:
+                    add loop-block to {_hwaseok::*}
+            
+            set {_hwaseokblock} to random element of {_hwaseok::*}
+            set {_loc} to {_hwaseokblock}
+            set y-coord of {_loc} to (rounded y-coord of {_loc})
+
+            if the block at {_loc} is grass or tall grass or air or fern or large fern:
+                set {_n} to nbt compound from "{billboard:fixed,brightness:{sky:15,block:0},transformation:{left_rotation:[0f,0f,0f,1f],right_rotation:[1f,0f,0f,1f],translation:[0f,0f,0f],scale:[0.5f,0.5f,0.5f]},item:{id:'minecraft:white_dye',Count:1b,tag:{CustomModelData:5}}}"
+                spawn item display at {_loc} with nbt {_n}
+                set the block at {_loc} to air
+                set {findfossil::%uuid of player%} to 0
+                
+
+on death:
+    if attacker is player:
+        if "%victim%" contains "hoglin" or "zombie" or "skeleton" or "slime" or "creeper" or "ender" or "piglin" or "zoglin" or "husk" or "spider" or "drowned" or "magma" or "witch":
+            getExp("adv",attacker)
+        else if victim is chicken or cow or pig or rabbit or sheep:
+            chance of 50%:
+                getExp("adv",attacker)
+
+on place:
+    if "%event-block%" contains "log":
+        set {log.%uuid of player%} to 3
+    if "%event-block%" contains "dandelion" or "poppy" or "orchid" or "allium" or "azure" or "tulip" or "oxeye" or "cornflower" or "lily" or "petals" or "sunflower" or "lilac" or "rose" or "peony":
+        set {flower.%uuid of player%} to 5
+
+on break:
+    if "%event-block%" contains "dandelion" or "poppy" or "orchid" or "allium" or "azure" or "tulip" or "oxeye" or "cornflower" or "lily" or "petals" or "sunflower" or "lilac" or "rose" or "peony":
+        if {flower.%uuid of player%} is not set:
+            drop honeycomb at event-block
+            chance of 20%:
+                getExp("adv",player)
+        else if {flower.%uuid of player%} >= 1:
+            set {flower.%uuid of player%} to {flower.%uuid of player%} - 1
+            if {flower.%uuid of player%} = 0:
+                delete {flower.%uuid of player%}
+    else if "%event-block%" contains "log":
+        if {log.%uuid of player%} is not set:
+            chance of 5%:
+                getExp("adv",player)
+        else if {log.%uuid of player%} >= 1:
+            set {log.%uuid of player%} to {log.%uuid of player%} - 1
+            if {log.%uuid of player%} = 0:
+                delete {log.%uuid of player%}
+
+on break of grass block or dirt or farmland or dirt path:
+    loop all item displays in radius 1 around event-block:
+        set {_화석} to true
+        set {_itemDisplay} to loop-entity
+
+    if {_화석} is true:
+        if line 1 of lore of player's tool contains "발굴 도구":
+            add operationAc(itemLv(player's tool),1,10) to {fossilblock::%event-location%}
+            if {fossilblock::%event-location%} >= 100:
+                send action bar "&a화석 발굴 완료! &f[100%{percent}%]" to player
+                loop 4 times:
+                    getExp("adv",player)
+                cancel drops
+                play sound "block.dispenser.launch" in block category with volume 1 and pitch 2 at event-block
+                show 20 campfire cosy smoke with offset of 0.5, 0.5, 0.5 and speed 0.5 at location of event-block
+
+                set {_doublefossil} to 1
+                if storeAccessory(player,122) >= 1:
+                    chance of operationAc(storeAccessory(player,122),5,40)%:
+                        set {_doublefossil} to 2
+                else:
+                    set {_doublefossil} to 1
+                chance of operationAc(itemLv(player's tool),10,50)%:
+                    drop {_doublefossil} of ghast tear with custom model data 13 named "&d희귀 화석" with lore "&9미감정됨" and "&7&o박물관에 가져가면 화석을 감정받을 수 있다."
+                else:
+                    drop {_doublefossil} of ghast tear with custom model data 12 named "&f화석" with lore "&9미감정됨" and "&7&o박물관에 가져가면 화석을 감정받을 수 있다."
+                set event-block to grass block
+                delete {fossilblock::%event-location%}
+
+                #도굴꾼 : 화석 발굴 시 다시 채굴
+                if storeAccessory(player,122) >= 1:
+                    chance of operationAc(storeAccessory(player,122),5,60)%:
+                        show 50 lava pop with offset of 0.5, 0.5, 0.5 and speed 0.5 at location of event-block
+                        play sound "block.bell.use" in ambient category with volume 2 and pitch 2.0 at event-block
+                        set event-block to grass block
+                        set {_ac122} to true
+                if {_ac122} is not true:
+                    kill {_itemDisplay}
+            else:
+                if storeAccessory(player,125) >= 1:
+                    set {_ac125} to operationAc(storeAccessory(player,125),2,7) * operationAc(itemLv(player's tool),0.5,10)
+                    chance of {_ac125}%:
+                        show 50 egg crack with offset of 0.5, 0.5, 0.5 and speed 0.5 at location of event-block
+                        play sound "block.dispenser.launch" in ambient category with volume 2 and pitch 2.0 at event-block
+                        set {_random125} to a random integer between 1 and 10
+                        if {_random125} is between 1 and 2:
+                            drop 1 of ghast tear with custom model data 9 named "&d강화석" at event-block
+                        else if {_random125} = 3:
+                            drop 1 of ghast tear with custom model data 10 named "&6상급 강화석" at event-block
+                        else if {_random125} = 4:
+                            drop 1 of diamond at event-block
+                        else if {_random125} is between 5 and 10:
+                            drop 1 of iron ingot at event-block
+
+                damageitem(player)
+                send action bar "&a화석 발굴 중! &f[%{fossilblock::%event-location%}%%{percent}%]" to player
+                cancel event
+        else:
+            send "&c[ ! ] &f화석은 삽으로 캐야합니다!" to player
+            cancel event
+    else:
+        if line 1 of lore of player's tool contains "발굴 도구":
+            #흙수저 : 흙을 캘 때 확률적으로 화석
+            if storeAccessory(player,124) >= 1:
+                chance of operationAc(storeAccessory(player,124),1,10)%:
+                    cancel drops
+                    
+                    play sound "entity.elder_guardian.curse" in ambient category with volume 0.5 and pitch 2.0 at event-block
+                    show 20 campfire cosy smoke with offset of 0.5, 0.5, 0.5 and speed 0.01 at location of event-block
+                    set {_doublefossil} to 1
+                    if storeAccessory(player,122) >= 1:
+                        chance of operationAc(storeAccessory(player,122),5,40)%:
+                            set {_doublefossil} to 2
+                    else:
+                        set {_doublefossil} to 1
+
+                    chance of operationAc(itemLv(player's tool),10,50)%:
+                        drop {_doublefossil} of ghast tear with custom model data 13 named "&d희귀 화석" with lore "&9미감정됨" and "&7&o박물관에 가져가면 화석을 감정받을 수 있다."
+                    else:
+                        drop {_doublefossil} of ghast tear with custom model data 12 named "&f화석" with lore "&9미감정됨" and "&7&o박물관에 가져가면 화석을 감정받을 수 있다."
+
+on break of dirt:
+    if line 1 of lore of player's tool contains "발굴 도구":
+        #흙수저 : 흙을 캘 때 확률적으로 화석
+        if storeAccessory(player,124) >= 1:
+            chance of operationAc(storeAccessory(player,124),0.1,3)%:
+                cancel drops
+                
+                play sound "entity.elder_guardian.curse" in ambient category with volume 0.5 and pitch 2.0 at event-block
+                show 20 campfire cosy smoke with offset of 0.5, 0.5, 0.5 and speed 0.01 at location of event-block
+                chance of operationAc(itemLv(player's tool),10,50)%:
+                    drop 1 ghast tear with custom model data 13 named "&d희귀 화석" with lore "&9미감정됨" and "&7&o박물관에 가져가면 화석을 감정받을 수 있다."
+                else:
+                    drop 1 ghast tear with custom model data 12 named "&f화석" with lore "&9미감정됨" and "&7&o박물관에 가져가면 화석을 감정받을 수 있다."
+
+on break:
+    if "%event-block%" contains "log":
+        if "%event-block%" contains "strip":
+            set {_wowgum} to 0
+        else:
+            if line 1 of lore of player's tool contains "벌목 도구":
+                set {_drops::*} to drops of event-block
+                if storeAccessory(player,142) >= 1:
+                    set {_ac142} to true
+                    while {_ac142}:
+                        add 1 to {_num142}
+                        if "%the block {_num142} above event-block%" contains "log":
+                            add drops of the block {_num142} above event-block to {_drops::*}
+                            set the block {_num142} above event-block to air
+                            chance of 5%:
+                                getExp("adv",player)
+                            show 20 campfire cosy smoke with offset of 0.5, 0.5, 0.5 and speed 0.01 at the block {_num142} above event-block
+                            play sound "block.wood.break" in ambient category with volume 1 and pitch 1 at the block {_num142} above event-block
+                        else:
+                            set {_ac142} to false
+                loop {_drops::*}:
+                    if storeAccessory(player,144) >= 1:
+                        chance of operationAc(storeAccessory(player,144),10,100)%:
+                            show 100 enchanted hit with offset of 0.5, 0.5, 0.5 and speed 1 at the block {_num142} above event-block
+                            play sound "block.enchantment_table.use" in ambient category with volume 2 and pitch 2 at the block {_num142} above event-block
+                            set item amount of {_drops::%loop-index%} to item amount of {_drops::%loop-index%} * ( 1 + operationAc(storeAccessory(player,144),2,6))
+                cancel drops
+                drop {_drops::*} at event-block
+
+    else if "%event-block%" contains "leaf": 
+        if storeAccessory(player,143) >= 1:
+            if player's tool is not shears:
+                set {_drops::*} to drops of event-block
+                
+                if storeAccessory(player,143) >= 1:
+                    chance of operationAc(storeAccessory(player,143),10,100)%:
+                        show 100 enchant with offset of 0.5, 0.5, 0.5 and speed 1 at the block {_num142} above event-block
+                        play sound "entity.evoker.prepare_summon" in ambient category with volume 2 and pitch 2 at the block {_num142} above event-block
+                        add operationAc(storeAccessory(player,143),1,4) of apple to {_drops::*}
+                
+                cancel drops
+                drop {_drops::*} at event-block
+            

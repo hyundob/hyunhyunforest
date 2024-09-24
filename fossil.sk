@@ -1,0 +1,128 @@
+function randomFossil(n: integer):: item:
+    if {_n} = 1:
+        set {_epic} to true
+    else:
+        set {_epic} to false
+
+    loop {FossilList::1::item::*}:
+        if {_epic} is true:
+            if {FossilList::1::sell::%loop-index%} >= 5000:
+                add loop-value to {_fossil::item::*}
+                add (1 / {FossilList::1::sell::%loop-index%}) to {_fossil::weight::*}
+        else:
+            if {FossilList::1::sell::%loop-index%} < 5000:
+                add loop-value to {_fossil::item::*}
+                add (1 / {FossilList::1::sell::%loop-index%}) to {_fossil::weight::*}
+
+    loop {FossilList::2::item::*}:
+        if {_epic} is true:
+            if {FossilList::2::sell::%loop-index%} >= 5000:
+                add loop-value to {_fossil::item::*}
+                add (1 / {FossilList::2::sell::%loop-index%}) to {_fossil::weight::*}
+        else:
+            if {FossilList::2::sell::%loop-index%} < 5000:
+                add loop-value to {_fossil::item::*}
+                add (1 / {FossilList::2::sell::%loop-index%}) to {_fossil::weight::*}
+    
+    loop {_fossil::weight::*}:
+        add loop-value to {_weightSum}
+    
+    set {_random} to a random number between 0 to {_weightSum}
+
+    loop {_fossil::weight::*}:
+        if loop-value >= {_random}:
+            set {_item} to {_fossil::item::%loop-index%}
+            set line 1 of lore of {_item} to "&9화석"
+            return {_item}
+            exit loop
+        else:
+            set {_random} to {_random} - loop-value
+
+command /화석내놔 <integer> <integer>:
+    trigger:
+        if player is op:
+            loop arg-2 times:
+                give randomFossil(arg-1) to player
+
+command /화석 [<text>] [<text>] [<text>]:
+    trigger:
+        if player is op:           
+            if arg-2 is "설정":
+                set {FossilList::%arg-1%::row} to 6
+                set {_inv} to chest inventory with {FossilList::%arg-1%::row} row named "화석목록 %arg-1%"
+                loop {FossilList::%arg-1%::item::*}:
+                    add 1 to {_slot}
+                    if {_slot} > {FossilList::%arg-1%::row} * 9:
+                        exit loop
+                    set slot {_slot} - 1 of {_inv} to loop-value
+                open {_inv} to player
+            else if arg-2 is "판매가격":
+                set {_arg3} to arg 3 parsed as integer
+                if {_arg3} is not set:
+                    send "{@p} 가격은 정수로 입력해 주세요."
+                    exit
+                set {shop.tmp.%uuid of player%::sell} to {_arg3}
+                set {_inv} to chest inventory with {FossilList::%arg-1%::row} row named "화석판매가격 %arg-1%"
+                loop {FossilList::%arg-1%::item::*}:
+                    add 1 to {_slot}
+                    if {_slot} > {FossilList::%arg-1%::row} * 9:
+                        exit loop
+                    delete {_lore::*}
+                    set {_itemI} to loop-value
+                    add "&e판매가격 &f%{FossilList::%arg-1%::sell::%loop-index-1%}%" to {_lore::*}
+                    set {_itemI}'s lore to {_lore::*}
+                    set slot {_slot} - 1 of {_inv} to {_itemI}
+                open {_inv} to player
+            else if arg-2 is "확인":
+                set {_arg3} to arg 3 parsed as integer
+                if {_arg3} is not set:
+                    send "{@p} 가격은 정수로 입력해 주세요."
+                    exit
+                send "%{FossilList::%arg-1%::sell::%{_arg3}%}%"
+            else if arg-2 is "이름":
+                set {_arg3} to arg 3
+                if {_arg3} is not set:
+                    send "{@p} 가격은 정수로 입력해 주세요."
+                    exit
+                set {shop.tmp.%uuid of player%::name} to {_arg3}
+                set {_inv} to chest inventory with {FossilList::%arg-1%::row} row named "화석이름 %arg-1%"
+                loop {FossilList::%arg-1%::item::*}:
+                    add 1 to {_slot}
+                    if {_slot} > {FossilList::%arg-1%::row} * 9:
+                        exit loop
+                    set slot {_slot} - 1 of {_inv} to loop-value
+                open {_inv} to player
+        else:
+            send "&c[ ! ] &f접근할 수 없는 명령어입니다." to player
+            
+on inventory close:
+    event-inventory's display name contain "화석목록"
+    set {_name} to event-inventory's display name
+    replace "화석목록" and " " with "" in {_name}
+    delete {FossilList::%{_name}%::item::*}
+    loop {FossilList::%{_name}%::row} * 9 times:
+        add slot loop-number - 1 of event-inventory to {FossilList::%{_name}%::item::*}
+    send "&e%{_name}%"
+
+on inventory click:
+    event-inventory's display name contain "화석판매가격" or "화석이름"
+    cancel event
+    clicked inventory is player' current inventory
+    event-slot is not air
+    set {_name} to event-inventory's display name
+    replace "화석판매가격" and "화석이름" and " " with "" in {_name}
+    if event-inventory's display name contain "화석판매가격":
+        if {shop.tmp.%uuid of player%::sell} is 0:
+            delete {FossilList::%{_name}%::sell::%index of clicked slot + 1%}
+            send "&e%{_name}% &f상점의 &e%index of clicked slot + 1% &f슬롯의 판매가격을 삭제했습니다."
+        else:
+            set {FossilList::%{_name}%::sell::%index of clicked slot + 1%} to {shop.tmp.%uuid of player%::sell}
+            send "&e%{_name}% &f상점의 &e%index of clicked slot + 1% &f슬롯의 판매가격을 &e%{shop.tmp.%uuid of player%::sell}% &f원으로 설정했습니다."
+    if event-inventory's display name contain "화석이름":
+        set {_item} to {FossilList::%{_name}%::item::%index of clicked slot + 1%}
+        set {_itemname} to colored {shop.tmp.%uuid of player%::name}
+        send "%{_itemname}%"
+        set name of {_item} to {_itemname}
+        set {FossilList::%{_name}%::item::%index of clicked slot + 1%} to {_item}
+        set slot index of clicked slot of event-inventory to {_item}
+        give {_item} to player

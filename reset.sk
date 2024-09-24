@@ -1,0 +1,72 @@
+function resetPlayer(p: player):
+    set {_uuid} to uuid of {_p}
+
+    delete {exp::farm::%{_uuid}%}
+    delete {exp::mine::%{_uuid}%}
+    delete {exp::fish::%{_uuid}%}
+    delete {exp::adv::%{_uuid}%}
+
+    set {level::farm::%{_uuid}%} to 0
+    set {level::mine::%{_uuid}%} to 0
+    set {level::fish::%{_uuid}%} to 0
+    set {level::adv::%{_uuid}%} to 0
+
+    set {money::%{_uuid}%} to 0
+    set {leaf::%{_uuid}%} to 0
+    set {houseLevel::%{_uuid}%} to 1
+
+    delete {accessory::%{_uuid}%::*}
+    delete {house::%{_uuid}%::location}
+    delete {border::%{_uuid}%}
+    delete {name::%{_uuid}%}
+    delete {houseChest::%{_uuid}%::*}
+    delete {friend::%{_uuid}%::*}
+    delete {getHouse::%{_uuid}%}
+    delete {total::%{_uuid}%}
+    delete {spendStat::%{_uuid}%::*}
+    delete {statMine::%{_uuid}%}
+    delete {statFish::%{_uuid}%}
+    delete {statFarm::%{_uuid}%}
+    delete {statAdv::%{_uuid}%}
+    delete {fishmuseum::%{_uuid}%::*}
+    delete {fossilmuseum::%{_uuid}%::*}
+    delete {recipeKnown::%{_uuid}%::*}
+    delete {recipeKnown::%{_uuid}%::*}
+    delete {friendprocess::%{_uuid}%::*}
+    delete {todaytotal::%{_uuid}%}
+    delete {total::%{_uuid}%}
+    delete {notax::%{_uuid}%}
+    delete {tax::%{_uuid}%}
+    delete {resettiChat::%{_uuid}%}
+    delete {resettiTime::%{_uuid}%}
+    delete {join::%{_uuid}%}
+    delete {jointime::%{_uuid}%}
+    delete {death::%{_uuid}%}
+    delete {taxall::%{_uuid}%}
+
+command /초기화 <player>:
+    trigger:
+        if player is op:
+            resetPlayer(arg-1)
+
+command /야생초기화:
+    trigger:
+        if player is op:
+            delete {mineHP::*}
+            delete {돌아가기::*}
+
+command /집단계 <player> <integer>:
+    trigger:
+        if player is op:
+            set {_uuid} to uuid of arg 1
+            set {houseLevel::%{_uuid}%} to arg 2
+
+every 1 seconds:
+    loop all players:
+        set {_uuid} to uuid of loop-player
+        add 1 to {jointime::%{_uuid}%}
+
+on death:
+    if victim is player:
+        set {_uuid} to uuid of victim
+        add 1 to {death::%{_uuid}%}

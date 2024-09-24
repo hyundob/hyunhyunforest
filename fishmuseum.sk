@@ -1,0 +1,87 @@
+function fishMuseum(p: player, n: number):
+    set {_uuid} to uuid of {_p}
+
+    if {_n} = 1:
+        set {_inv} to chest inventory with 6 row named "&f"
+    else if {_n} = 2:
+        set {_inv} to chest inventory with 6 row named "&f"
+    else if {_n} = 3:
+        set {_inv} to chest inventory with 6 row named "&f"
+
+    loop 9*3 times:
+        add 1 to {_slot}
+        set {_CMD} to 1000 + {_slot} + ({_n} - 1) * 27
+        if {_CMD} >= 1047:
+            add 54 to {_CMD}
+        if {_CMD} <= 1134:
+            set {_CMDP} to {_CMD} - 1000
+            if {fishmuseum::%{_uuid}%::%{_CMDP}%} is true:
+                if {_CMD} <= 1100:
+                    set {_pos} to "River"
+                else:
+                    set {_pos} to "Sea"
+                loop {FishingList::%{_pos}%::item::*}:
+                    if custom model data of loop-value-2 = {_CMDP}:
+                        set {_item} to loop-value-2
+                        set slot {_slot} + 17 of {_inv} to {_item}
+            else:
+                set {_item} to apple with custom model data {_CMD}
+                set name of {_item} to "&f???"
+                set slot {_slot} + 17 of {_inv} to {_item}
+    
+    set {_nextSpace} to barrier with custom model data 1 named "&a다음 페이지" with lore "&f다음 페이지로 이동합니다."
+    set {_prevSpace} to barrier with custom model data 1 named "&a이전 페이지" with lore "&f이전 페이지로 이동합니다."
+
+    if {_n} is 1 or 2:
+        set slot 6 + 9*5 of {_inv} to {_nextSpace}
+        set slot 7 + 9*5 of {_inv} to {_nextSpace}
+    if {_n} is 2 or 3:
+        set slot 1 + 9*5 of {_inv} to {_prevSpace}
+        set slot 2 + 9*5 of {_inv} to {_prevSpace}
+
+    loop {fishmuseum::%{_uuid}%::*}:
+        add 1 to {_fishCount}
+    if {_fishCount} is not set:
+        set {_fishCount} to 0
+    
+    set {_per} to {_fishCount} / 80 * 100
+    set slot 4 + 9*5 of {_inv} to nether star named "&9기증 현황" with lore "&f %{_fishCount}% / 80 (%{_per}%%{percent}%)" and "&7&o기증 효과로 수익 %{_fishCount}%%{percent}% 증가함"
+    open {_inv} to {_p}
+
+
+command /물고기도감 <integer>:
+    trigger:
+        fishMuseum(player, arg 1)
+
+on inventory click:
+    if name of event-inventory contains "" or "" or "":
+        cancel event
+
+        if name of event-item contains "이전":
+            if name of event-inventory contains "":
+                fishMuseum(player,1)
+            else if name of event-inventory contains "":
+                fishMuseum(player,2)
+
+        if name of event-item contains "다음":
+            if name of event-inventory contains "":
+                fishMuseum(player,2)
+            else if name of event-inventory contains "":
+                fishMuseum(player,3)
+
+        if line 1 of lore of event-item is "&9물고기":
+            set {_CMD} to custom model data of event-item
+            if {fishmuseum::%uuid of player%::%{_CMD}%} is not true:
+                remove 1 of event-item from player's inventory
+                set {fishmuseum::%uuid of player%::%{_CMD}%} to true
+                send "&a물고기를 기증했다!" to player
+                play sound "entity.experience_orb.pickup" with volume 0.5 to player
+                if name of event-inventory contains "":
+                    fishMuseum(player,1)
+                else if name of event-inventory contains "":
+                    fishMuseum(player,2)
+                else if name of event-inventory contains "":
+                    fishMuseum(player,3)
+            else:
+                send "&c[ ! ] &f이미 기증한 물고기는 다시 기증할 수 없다." to player
+                play sound "entity.villager.no" with volume 0.5 to player

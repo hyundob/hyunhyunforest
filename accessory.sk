@@ -1,0 +1,249 @@
+function openAccessory(p: player):
+    set {_uuid} to uuid of {_p}
+
+    set {_inv} to chest inventory with 3 row named "액세서리"
+
+    set {_num} to 0
+    loop {accessory::%{_uuid}%::*}:
+        set slot 11 + {_num} * 2 of {_inv} to loop-value
+        set {_num} to {_num} + 1
+        send "%loop-value%" to {_uuid}
+
+    open {_inv} to {_p}
+
+function operationAc(n: number, min: number, max: number):: number:
+    return {_min}+({_max}-{_min})*{_n}^2/15^2
+
+command /액세서리 <text>:
+    trigger:
+        if player is op:
+            if arg 1 is "설정":
+                set {_inv} to chest inventory with 6 row named "Accessory"
+                loop {Accessory::item::*}:
+                    add 1 to {_slot}
+                    if {_slot} > 6 * 9:
+                        exit loop
+                    set slot {_slot} - 1 of {_inv} to loop-value
+                open {_inv} to player
+
+on inventory close:
+    event-inventory's display name contain "Accessory"
+    delete {Accessory::item::*}
+    loop 6 * 9 times:
+        add slot loop-number - 1 of event-inventory to {Accessory::item::*}
+
+on inventory close:
+    if event-inventory's name contains "액세서리":
+        #거대 말파이트 : 체력
+        if storeAccessory(player,106) >= 1:
+            set {_malPlus} to rounded operationAc(storeAccessory(player,106),10,100)
+
+        #유리대포 : 체력 감소, 피해량 증가
+        if storeAccessory(player,107) >= 1:
+            set {_glassHP} to -5
+            set {_glassAD} to 0.5
+
+        set the maximum health of the player to 10 + {_malPlus} + {_glassHP} - {minusHP::%uuid of player%}
+        set player's attack damage attribute to 1 + {_glassAD}
+    
+on damage:
+    if damage is not 0:
+        if attacker is player:
+            set {_damage} to final damage
+            #유리대포 : 체력 감소, 피해량 증가
+            if storeAccessory(attacker,107) >= 1:
+                set {_glassAD} to operationAc(storeAccessory(attacker,107),0.2,1.5)
+                show 20 soul with offset of 0.5, 0.5, 0.5 and speed 0.1 at location of victim ~ vector(0,0.5,0)
+                play sound "entity.wither.hurt" in ambient category with volume 0.2 and pitch 2 at location of victim
+
+            #밤의 수확자 : 밤일때 피해량 증가
+            if time of "world" is night:
+                if storeAccessory(attacker,110) >= 1:
+                    set {_nightAD} to operationAc(storeAccessory(attacker,110),0.2,1.5)
+                    show 20 soul fire flame with offset of 0.5, 0.5, 0.5 and speed 0.1 at location of victim ~ vector(0,0.5,0)
+                    play sound "entity.blaze.hurt" in ambient category with volume 0.2 and pitch 2 at location of victim
+            set damage to damage * ( 1 + {_glassAD} + {_nightAD} )
+
+        if victim is not player or armor stand:
+            #도박꾼의 칼날 : 피해 입힐 때 골드
+            if storeAccessory(attacker,109) >= 1:
+                chance of operationAc(storeAccessory(attacker,109),10,100)%:
+                    show 50 scrape with offset of 0.5, 0.5, 0.5 and speed 0.01 at location of victim ~ vector(0,0.5,0)
+                    set {_addMoney} to damage * 2 * ( 1 + operationAc(storeAccessory(attacker,109),50,150))
+                    send "&a도박꾼의 칼날 효과로 돈을 획득했습니다! &f%addMoney(attacker,"일반",{_addMoney})%" to attacker
+                    play sound "block.amethyst_block.step" in ambient category with volume 2 and pitch 0 at location of victim
+                    play sound "block.amethyst_block.chime" in ambient category with volume 2 and pitch 0 at location of victim
+                    play sound "block.amethyst_block.break" in ambient category with volume 2 and pitch 0 at location of victim
+
+    if storeAccessory(victim,132) >= 1:
+        if damage cause is fall:
+            cancel event
+            show 100 snowflake with offset of 0.3, 0.5, 0.3 and speed 0.1 at location of victim ~ vector(0,0.5,0)
+            play sound "block.amethyst_block.step" in ambient category with volume 2 and pitch 0 at location of victim
+
+on death:
+    if victim is not player or armor stand:
+        set {_drops::*} to drops
+        chance of 50%:
+            if storeAccessory(attacker,113) >= 1:
+                set {_ac113} to operationAc(storeAccessory(attacker,113),1,3)
+                show 50 wax off with offset of 0.3, 0, 0.3 and speed 5 at victim
+                play sound "block.grindstone.use" in ambient category with volume 1 and pitch 2 at victim
+            set {_potatoC} to rounded ( 1 * ( 1 + {_ac113}) )
+            add {_potatoC} of potato with custom model data 1 named "&f감자 씨앗" to {_drops::*}
+
+        #약탈 : 추가 전리품 드랍
+        if storeAccessory(attacker,108) >= 1:
+            chance of operationAc(storeAccessory(attacker,108),10,100)%:
+                set {_loot} to operationAc(storeAccessory(attacker,108),1,5)
+                show 50 sculk soul with offset of 0.5, 0.5, 0.5 and speed 0.01 at location of victim ~ vector(0,0.5,0)
+                play sound "entity.wither.death" in ambient category with volume 0.1 and pitch 2 at location of victim
+
+        loop {_drops::*}:
+            set {_count} to item amount of loop-value * ( 1 + {_loot} )
+            set item amount of {_drops::%loop-index%} to {_count}
+
+        cancel drops
+        loop a random integer between 1 and 5 times:
+            drop 1 xp at victim
+        drop {_drops::*} at victim
+        if world of victim's location is "world_nether":
+            drop {_drops::*} at victim
+             
+             
+            if victim is magma cube:
+                chance of 33%:
+                    add magma cream to {_drops::*}
+            drop {_drops::*} at victim
+            loop a random integer between 1 and 5 times:
+                drop 1 xp at victim
+
+
+on break:
+    if event-block is sand:
+        if storeAccessory(player,141) >= 1:
+            cancel drops
+            drop 1 glass at event-block
+            show 50 smoke with offset of 0.5, 0.5, 0.5 and speed 1 at event-block
+            play sound "block.fire.extinguish" in ambient category with volume 0.5 and pitch 2 at event-block
+
+function storeAccessory(p: player, n: number):: integer:
+    set {_uuid} to uuid of {_p}
+    loop {accessory::%{_uuid}%::*}:
+        if custom model data of loop-value = {_n}:
+            return itemLv(loop-value)
+            exit loop
+
+on inventory click:
+    if event-inventory's name contains "액세서리":
+        cancel event
+        if line 1 of lore of event-item contains "액세서리":
+            if clicked inventory is player' current inventory:
+                if player don't have enough space for event-item:
+                    send "&c[ ! ] &f인벤토리에 빈 공간이 없어 장착 해제할 수 없습니다!"
+                else:
+                    set {_index} to (index of event-slot - 11) / 2 + 1
+                    
+                    give {accessory::%uuid of player%::%(index of event-slot - 11) / 2 + 1%} to player
+                    if {_index} is 1:
+                        if {accessory::%uuid of player%::2} is set:
+                            set {accessory::%uuid of player%::1} to {accessory::%uuid of player%::2}
+                            if {accessory::%uuid of player%::3} is set:
+                                set {accessory::%uuid of player%::2} to {accessory::%uuid of player%::3}
+                            else:
+                                delete {accessory::%uuid of player%::2}
+                        else:
+                            delete {accessory::%uuid of player%::1}
+                    else if {_index} is 2:
+                        if {accessory::%uuid of player%::3} is set:
+                            set {accessory::%uuid of player%::2} to {accessory::%uuid of player%::3}
+                            delete {accessory::%uuid of player%::3}
+                        else:
+                            delete {accessory::%uuid of player%::2}
+                    
+                    delete {accessory::%uuid of player%::3}
+                    openAccessory(player)
+
+            else:
+                set {_num} to 0
+                loop {accessory::%uuid of player%::*}:
+                    add 1 to {_num}
+
+                if {_num} >= 3:
+                    send "&c[ ! ] &f액세서리를 장착할 공간이 없습니다!"
+                else:
+                    loop {accessory::%uuid of player%::*}:
+                        if loop-value's name = event-item's name:
+                            send "&c[ ! ] &f동일한 액세서리를 이미 장착했습니다!"
+                            exit
+                    add event-item to {accessory::%uuid of player%::*}
+                    set event-slot to air
+                    openAccessory(player)
+
+on player xp increase:
+    if storeAccessory(player,126) >= 1:
+        set {_xp} to event-experience
+        decrease {_xp} by player
+
+        set {_xp} to "%{_xp}%"
+        replace all "xp" and " " with "" in {_xp}
+        set {_xp} to {_xp} parsed as integer
+        set {_xp} to {_xp} * operationAc(storeAccessory(player,126),50,1500)
+        send "&a학습 장치 효과로 돈을 획득했습니다! &f%addMoney(player,"일반",{_xp})%" to player
+        show 50 yellow dust with offset of 0.5, 0.5, 0.5 and speed 0.01 at location of player ~ vector(0,1,0)
+        play sound "block.amethyst_block.step" in ambient category with volume 2 and pitch 0 at location of player
+        play sound "block.amethyst_block.chime" in ambient category with volume 2 and pitch 0 at location of player
+        play sound "block.amethyst_block.break" in ambient category with volume 2 and pitch 0 at location of player
+
+
+every 1 seconds:
+    add 1 to {accessorytime}
+    loop all players:
+        if storeAccessory(loop-player,128) >= 1:
+            apply night vision potion of tier 0 without any particles whilst hiding the potion icon to the loop-player # Hide potions
+        else:
+            remove night vision from loop-player
+
+        if storeAccessory(loop-player,133) >= 1:
+            apply saturation potion of tier 1 without any particles whilst hiding the potion icon to the loop-player # Hide potions
+        else:
+            remove saturation from loop-player
+
+        if storeAccessory(loop-player,134) >= 1:
+            set {_ac134} to operationAc(storeAccessory(loop-player,134),0.1,0.5)
+            apply blindness potion of tier 0 without any particles whilst hiding the potion icon to the loop-player # Hide potions
+        else:
+            delete {_ac134}
+            remove blindness from loop-player
+
+        if storeAccessory(loop-player,135) >= 1:
+            apply fire resistance potion of tier 1 without any particles whilst hiding the potion icon to the loop-player # Hide potions
+        else:
+            remove fire resistance from loop-player
+
+        if storeAccessory(loop-player,138) >= 1:
+            set {_ac138} to operationAc(storeAccessory(loop-player,138),0.04,0.32)
+        else:
+            delete {_ac138}
+
+        set the loop-player's walk speed to 0.2 + {ac129::speed::%uuid of loop-player%} + {_ac134} + {_ac138}
+        if {accessorytime} >= {ac129::start::%uuid of loop-player%} + {ac129::duration::%uuid of loop-player%}:
+            set {ac129::speed::%uuid of loop-player%} to 0
+            delete {ac129::start::%uuid of loop-player%}
+            delete {ac129::duration::%uuid of loop-player%}
+
+
+on player move:
+    if storeAccessory(player,127) >= 1:
+        set {_speed::%uuid of player%} to the player's walk speed
+        add ({_speed::%uuid of player%} - 0.2) * 5 + 1 to {ac127::%uuid of player%}
+        if {ac127::%uuid of player%} >= 300:
+            set {ac127::%uuid of player%} to 0
+            show 50 yellow dust with offset of 0.5, 0.5, 0.5 and speed 0.01 at location of player ~ vector(0,1,0)
+            play sound "block.amethyst_block.step" in ambient category with volume 2 and pitch 0 at location of player
+            play sound "block.amethyst_block.chime" in ambient category with volume 2 and pitch 0 at location of player
+            play sound "block.amethyst_block.break" in ambient category with volume 2 and pitch 0 at location of player
+            send "&a황금 걸음 효과로 돈을 획득했습니다! &f%addMoney(player,"일반",operationAc(storeAccessory(player,127),25,3000))%" to player
+    if {ac129::speed::%uuid of player%} > 0:
+        show 10 red dust with offset of 0.3, 0.3, 0.3 and speed 1 at location of player
+        play sound "block.amethyst_cluster.step" with volume 0.2 and pitch 2 at location of player

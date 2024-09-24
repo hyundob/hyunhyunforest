@@ -1,0 +1,19 @@
+on pick up:
+    loop 5 times:
+        if line loop-value of lore of event-item contains "교환 불가":
+            set {_name} to uncolored line loop-value of lore of event-item
+            replace all "교환" and " " and "불가" with "" in {_name}
+            if {_name} is not player's name:
+                cancel event
+
+on inventory click:
+    loop 5 times:
+        if line loop-value of lore of event-item contains "교환 불가":
+            set {_name} to uncolored line loop-value of lore of event-item
+            replace all "교환" and " " and "불가" with "" in {_name}
+            if {_name} is not player's name:
+                cancel event
+
+command /교환불가 [<text>]:
+    trigger:
+        give iron ingot with lore "&c교환 불가 &f%arg-1%" to player

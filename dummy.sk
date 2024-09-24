@@ -1,0 +1,24 @@
+on join:
+    if {playeroffff::%uuid of player%} is not set:
+        if world of location of player is not "world":
+            teleport player to {setspawn}
+        set {playeroffff::%uuid of player%} to true
+
+on damage:
+    if victim is player:
+        if attacker is not player:
+            if world of location of victim is "world_nether": 
+                damage cause is attack or projectile
+                set damage to damage * 2
+
+on spawn:
+    if world of event-location is "world":
+        if "%event-entity%" contains "zombie" or "skeleton" or "slime" or "creeper" or "enderman" or "husk" or "spider" or "drowned" or "magma" or "witch" or "cod" or "salmon" or "pufferfish" or "pill" or "phantom":
+            cancel event
+
+on spawn:
+    if event-world is "world_nether":
+        if event-entity's max health >= 1:
+            if event-entity is not player:
+                set event-entity's max health to event-entity's max health * 2
+                set event-entity's health to event-entity's max health
